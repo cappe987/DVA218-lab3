@@ -78,8 +78,8 @@ unsigned int crc32(const unsigned char* buf, size_t len) {
 // But does it really matter though? 
 crc_packet create_crc(char data[CRC_DATA_SIZE]){ // Replace with struct 
   crc_packet packet;
-  strncpy(packet.data, data, CRC_DATA_SIZE);
-  packet.crc  = crc32((unsigned char*)data, CRC_DATA_SIZE);
+  memcpy(packet.data, data, CRC_DATA_SIZE);
+  packet.crc = crc32((unsigned char*)data, CRC_DATA_SIZE);
   return packet;
 }
 
@@ -89,6 +89,10 @@ bool valid_crc(crc_packet packet){
 }
 
 
+base_packet extract_base_packet(crc_packet packet){
+  base_packet base = *((base_packet*)packet.data);
+  return base;
+}
 
 // // DO NOT COMMIT WITH MAIN
 // int main() {

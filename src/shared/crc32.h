@@ -2,7 +2,8 @@
 #define CRC32_H
 
 #include <stdbool.h>
-#define CRC_DATA_SIZE 128
+#include "base_packet.h"
+#define CRC_DATA_SIZE sizeof(base_packet)
 
 typedef struct {
   char data[CRC_DATA_SIZE]; // Set same size as struct windowPacket
@@ -10,6 +11,8 @@ typedef struct {
 } crc_packet;
 
 crc_packet create_crc(char data[CRC_DATA_SIZE]); // Replace with struct 
+
+base_packet extract_base_packet(crc_packet packet);
 
 bool valid_crc(crc_packet packet);
 
