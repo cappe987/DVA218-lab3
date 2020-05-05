@@ -4,7 +4,7 @@ PROGRAMS = sender receiver
 
 SENDER_FILES = $(wildcard src/sender/*.c) src/shared/crc32.c
 
-RECEIVER_FILES = src/receiver/receiver.c
+RECEIVER_FILES = $(wildcard src/receiver/*.c) src/shared/crc32.c
 
 ALL: ${PROGRAMS}
 
