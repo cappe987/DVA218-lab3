@@ -19,11 +19,11 @@ int main() {
     char buffer[MAXLINE]; 
     char *hello = "Hello from client"; 
     struct sockaddr_in     servaddr; 
-    base_packet packet_send;
-    packet_send.seq = 9;
-    packet_send.ack = 10;
-    packet_send.flags = 'B';
-    strcpy(packet_send.data, hello);
+    base_packet packet;
+    packet.seq = 9;
+    packet.ack = 10;
+    packet.flags = 'B';
+    strcpy(packet.data, hello);
   
     // Creating socket file descriptor 
     if ( (sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ) { 
@@ -40,8 +40,8 @@ int main() {
       
     int n; 
     socklen_t len;
-    char* message = (char*)&packet_send; 
-    sendto(sockfd, (const char *)message, sizeof(base_packet),  
+    char* message_to_rec = (char*)&packet; 
+    sendto(sockfd, (const char *)message_to_rec, sizeof(base_packet),  
         MSG_CONFIRM, (const struct sockaddr *) &servaddr,  
             sizeof(servaddr)); 
     printf("Hello message sent.\n"); 
@@ -51,8 +51,8 @@ int main() {
                 &len); 
     buffer[n] = '\0'; 
 
-    base_packet packet = *(base_packet*) buffer;
-    printf("Server : %d\n", packet.seq); 
+    base_packet packet_received = *(base_packet*) buffer;
+    printf("Server : %d\n", packet_received.seq); 
   
     close(sockfd); 
     return 0; 

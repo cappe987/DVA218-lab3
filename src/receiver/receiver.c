@@ -56,11 +56,12 @@ int main() {
                 MSG_WAITALL, ( struct sockaddr *) &cliaddr, 
                 &len); 
     buffer[n] = '\0'; 
+    
     base_packet packet_received = *(base_packet*) buffer;
     printf("Client : %d\n", packet_received.ack);
 
-    char* message = (char*)&packet; 
-    sendto(sockfd, (const char *)message, sizeof(base_packet),  
+    char* message_to_send = (char*)&packet; 
+    sendto(sockfd, (const char *)message_to_send, sizeof(base_packet),  
         MSG_CONFIRM, (const struct sockaddr *) &cliaddr, 
             len); 
     printf("Message sent.\n");  
