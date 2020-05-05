@@ -6,6 +6,7 @@
 #include <sys/socket.h> 
 #include <arpa/inet.h> 
 #include <netinet/in.h> 
+#include <sys/time.h>
 #include "../shared/base_packet.h"
 #include "../shared/induce_errors.h"
 
@@ -23,6 +24,18 @@ int connection_setup(int sockfd, struct sockaddr_in servaddr){
   socklen_t len;
   int n;
   char* message_to_rec;
+  
+  
+  
+  //socket timeout thingy
+  struct timeval tv;
+  tv.tv_sec = 2;
+  tv.tv_usec = 0;
+  if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv))< 0)
+  {
+     perror("Error");
+  }
+  
 
   message_to_rec = (char*)&packet; 
     sendto(sockfd, (const char *)message_to_rec, sizeof(base_packet),  
