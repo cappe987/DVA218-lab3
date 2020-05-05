@@ -1,10 +1,10 @@
 CC = gcc
-CFLAGS = -Wall
+CFLAGS = -Wall -g
 PROGRAMS = sender receiver
 
-SENDER_FILES = $(wildcard src/sender/*.c) src/shared/crc32.c
+SENDER_FILES = $(wildcard src/sender/*.c) $(wildcard src/shared/*.c)
 
-RECEIVER_FILES = $(wildcard src/receiver/*.c) src/shared/crc32.c
+RECEIVER_FILES = $(wildcard src/receiver/*.c) $(wildcard src/shared/*.c)
 
 ALL: ${PROGRAMS}
 

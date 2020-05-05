@@ -7,6 +7,7 @@
 #include <arpa/inet.h> 
 #include <netinet/in.h> 
 #include "../shared/base_packet.h"
+#include "../shared/induce_errors.h"
 
 #define PORT     8080 
 #define MAXLINE 1024 
@@ -41,7 +42,7 @@ int main() {
     int n; 
     socklen_t len;
     char* message_to_rec = (char*)&packet; 
-    sendto(sockfd, (const char *)message_to_rec, sizeof(base_packet),  
+    send_with_error(sockfd, (const char *)message_to_rec, sizeof(base_packet),  
         MSG_CONFIRM, (const struct sockaddr *) &servaddr,  
             sizeof(servaddr)); 
     printf("Hello message sent.\n"); 
