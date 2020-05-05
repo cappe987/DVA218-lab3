@@ -46,7 +46,8 @@ int main() {
         exit(EXIT_FAILURE); 
     } 
       
-    int len, n; 
+    int n; 
+    socklen_t len;
   
     len = sizeof(cliaddr);  //len is value/resuslt
 

@@ -38,7 +38,8 @@ int main() {
     servaddr.sin_port = htons(PORT); 
     servaddr.sin_addr.s_addr = INADDR_ANY; 
       
-    int n, len; 
+    int n; 
+    socklen_t len;
     char* message = (char*)&packet_send; 
     sendto(sockfd, (const char *)message, sizeof(base_packet),  
         MSG_CONFIRM, (const struct sockaddr *) &servaddr,  
