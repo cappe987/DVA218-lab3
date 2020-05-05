@@ -7,7 +7,7 @@
 #include <arpa/inet.h> 
 #include <netinet/in.h> 
 #include "../shared/base_packet.h"
-  
+
 #define PORT     8080 
 #define MAXLINE 1024 
   
@@ -19,6 +19,11 @@ int main() {
     char buffer[MAXLINE]; 
     char *hello = "Hello from client"; 
     struct sockaddr_in     servaddr; 
+    base_packet packet_send;
+    packet_send.seq = 9;
+    packet_send.ack = 10;
+    packet_send.flags = 'B';
+    strcpy(packet_send.data, hello);
   
     // Creating socket file descriptor 
     if ( (sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ) { 
@@ -34,8 +39,8 @@ int main() {
     servaddr.sin_addr.s_addr = INADDR_ANY; 
       
     int n, len; 
-      
-    sendto(sockfd, (const char *)hello, strlen(hello), 
+    char* message = (char*)&packet_send; 
+    sendto(sockfd, (const char *)message, sizeof(base_packet),  
         MSG_CONFIRM, (const struct sockaddr *) &servaddr,  
             sizeof(servaddr)); 
     printf("Hello message sent.\n"); 
@@ -44,7 +49,9 @@ int main() {
                 MSG_WAITALL, (struct sockaddr *) &servaddr, 
                 &len); 
     buffer[n] = '\0'; 
-    printf("Server : %s\n", buffer); 
+
+    base_packet packet = *(base_packet*) buffer;
+    printf("Server : %d\n", packet.seq); 
   
     close(sockfd); 
     return 0; 

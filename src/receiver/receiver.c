@@ -17,6 +17,12 @@ int main() {
     char buffer[MAXLINE]; 
     char *hello = "Hello from server"; 
     struct sockaddr_in servaddr, cliaddr; 
+    base_packet packet;
+    packet.seq = 4;
+    packet.ack = 1;
+    packet.flags = 'A';
+    strcpy(packet.data, hello);
+    
       
     // Creating socket file descriptor 
     if ( (sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ) { 
@@ -42,17 +48,21 @@ int main() {
       
     int len, n; 
   
-    len = sizeof(cliaddr);  //len is value/resuslt 
-  
+    len = sizeof(cliaddr);  //len is value/resuslt
+
+    
     n = recvfrom(sockfd, (char *)buffer, MAXLINE,  
                 MSG_WAITALL, ( struct sockaddr *) &cliaddr, 
                 &len); 
     buffer[n] = '\0'; 
-    printf("Client : %s\n", buffer); 
-    sendto(sockfd, (const char *)hello, strlen(hello),  
+    base_packet packet_received = *(base_packet*) buffer;
+    printf("Client : %d\n", packet_received.ack);
+
+    char* message = (char*)&packet; 
+    sendto(sockfd, (const char *)message, sizeof(base_packet),  
         MSG_CONFIRM, (const struct sockaddr *) &cliaddr, 
             len); 
-    printf("Hello message sent.\n");  
+    printf("Message sent.\n");  
       
     return 0; 
 } 
