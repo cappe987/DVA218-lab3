@@ -15,5 +15,8 @@ sender: ${SENDER_FILES}
 receiver: ${RECEIVER_FILES}
 	${CC} ${CFLAGS} -o receiver ${RECEIVER_FILES}
 
+shared: src/shared/crc32.c
+	${CC} -g -o shared src/shared/crc32.c
+
 clean:
 	rm -f ${PROGRAMS}
