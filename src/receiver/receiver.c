@@ -11,6 +11,64 @@
 #define PORT     8080 
 #define MAXLINE 1024 
 
+//ACK: 1 SYN: 2 FIN: 4 NACK: 8
+
+int connection_setup(int sockfd, struct sockaddr_in cliaddr){
+    char buffer[MAXLINE];
+  base_packet packet_received;
+  base_packet packet;
+  packet.seq = 1;
+  packet.flags = 3;
+  socklen_t len;
+  len = sizeof(cliaddr);
+  int n;
+  char* message_to_send;
+
+  n = recvfrom(sockfd, (char *)buffer, MAXLINE,  
+                MSG_WAITALL, (struct sockaddr *) &cliaddr, 
+                &len); 
+    buffer[n] = '\0'; 
+  packet_received = *(base_packet*) buffer;
+  printf("Sender: %d\n", packet_received.flags);
+
+  if(packet_received.flags != 2){
+    packet.flags = 8;
+    message_to_send = (char*)&packet; 
+    sendto(sockfd, (const char *)message_to_send, sizeof(base_packet),  
+        MSG_CONFIRM, (const struct sockaddr *) &cliaddr, 
+            len); 
+    printf("Received faulty SYN, sending NACK.\n");
+  }
+
+  packet.flags = 3;
+  packet.seq = 2;
+  message_to_send = (char*)&packet; 
+  sendto(sockfd, (const char *)message_to_send, sizeof(base_packet),  
+        MSG_CONFIRM, (const struct sockaddr *) &cliaddr, 
+            len);  
+  printf("SYN + ACK sent.\n");
+
+  n = recvfrom(sockfd, (char *)buffer, MAXLINE,  
+                MSG_WAITALL, (struct sockaddr *) &cliaddr, 
+                &len); 
+    buffer[n] = '\0'; 
+
+  packet_received = *(base_packet*) buffer;
+  printf("Sender: %d\n", packet_received.flags);
+
+  if(packet_received.flags != 1){
+    packet.flags = 8;
+    message_to_send = (char*)&packet; 
+    sendto(sockfd, (const char *)message_to_send, sizeof(base_packet),  
+        MSG_CONFIRM, (const struct sockaddr *) &cliaddr, 
+            len); 
+    printf("Received faulty ACK, sending NACK.\n");
+  } 
+
+  printf("Connection established\n");
+  return 1;
+}
+
 // Driver code 
 int main() { 
     int sockfd; 
@@ -20,7 +78,7 @@ int main() {
     base_packet packet;
     packet.seq = 4;
     packet.ack = 1;
-    packet.flags = 'A';
+    packet.flags = 3;
     strcpy(packet.data, hello);
     
       
@@ -49,22 +107,23 @@ int main() {
     int n; 
     socklen_t len;
   
-    len = sizeof(cliaddr);  //len is value/resuslt
+    len = sizeof(cliaddr);  //len is value/result
 
-    
-    n = recvfrom(sockfd, (char *)buffer, MAXLINE,  
-                MSG_WAITALL, ( struct sockaddr *) &cliaddr, 
-                &len); 
-    buffer[n] = '\0'; 
-    
-    base_packet packet_received = *(base_packet*) buffer;
-    printf("Client : %d\n", packet_received.ack);
+    int connection = connection_setup(sockfd, cliaddr);
 
-    char* message_to_send = (char*)&packet; 
-    sendto(sockfd, (const char *)message_to_send, sizeof(base_packet),  
-        MSG_CONFIRM, (const struct sockaddr *) &cliaddr, 
-            len); 
-    printf("Message sent.\n");  
+    // n = recvfrom(sockfd, (char *)buffer, MAXLINE,  
+    //             MSG_WAITALL, ( struct sockaddr *) &cliaddr, 
+    //             &len); 
+    // buffer[n] = '\0'; 
+
+    // base_packet packet_received = *(base_packet*) buffer;
+    // printf("Client : %d\n", packet_received.flags);
+
+    // char* message_to_send = (char*)&packet; 
+    // sendto(sockfd, (const char *)message_to_send, sizeof(base_packet),  
+    //     MSG_CONFIRM, (const struct sockaddr *) &cliaddr, 
+    //         len); 
+    // printf("Message sent.\n");  
       
     return 0; 
 } 
