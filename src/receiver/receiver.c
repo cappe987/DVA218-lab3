@@ -6,17 +6,11 @@
 #include <sys/socket.h> 
 #include <arpa/inet.h> 
 #include <netinet/in.h> 
+#include "../shared/base_packet.h"
   
 #define PORT     8080 
 #define MAXLINE 1024 
 
-struct windowPacket{
-  int seq; // 4 bytes
-  int ack; // 4 bytes 
-  unsigned char flags; // ACK, NACK, SYN, FIN // 1 byte
-  char data[64]; // ? bytes
-};
-  
 // Driver code 
 int main() { 
     int sockfd; 
