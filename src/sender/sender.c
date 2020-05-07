@@ -12,17 +12,24 @@
 #include "../shared/constants.h"
 
 //ACK: 1 SYN: 2 FIN: 4 NACK: 8
+
+void reset_variables(int *timeout, int *response, struct timeval *tv){
+    *timeout = 0;
+    *response = -1;
+    tv->tv_sec = TIMEOUT;
+}
   
 int connection_setup(int sockfd, struct sockaddr_in servaddr, struct timeval tv, base_packet packet_received, base_packet packet, char* buffer, socklen_t len){
-  packet.seq = 1;
-  packet.flags = 2;
-  int response = -1, seq = -1;
+  int response = -1, seq = -1, nr_of_timeouts = 0;
   char* message_to_rec;
 
   srand(time(0));
   seq = rand() % 100;
+  // printf("%d", seq);
+  // Setting sequence number and SYN
+  packet.seq = seq;
+  packet.flags = 2;
   
-
   message_to_rec = (char*)&packet;     
   send_with_error(sockfd, (const char *)message_to_rec, sizeof(base_packet), MSG_CONFIRM, (const struct sockaddr *) &servaddr, sizeof(servaddr)); 
   printf("SYN sent.\n");
@@ -39,19 +46,23 @@ int connection_setup(int sockfd, struct sockaddr_in servaddr, struct timeval tv,
       printf("Received NACK or timeout, SYN resent.\n");
       response = -1;
       tv.tv_sec = tv.tv_sec * 2;
+
+      if(nr_of_timeouts == NR_OF_TIMEOUTS_ALLOWED){
+            return -1;
+        }
     }
   }
 
-  tv.tv_sec = TIMEOUT;
-  response = -1;
+  reset_variables(&nr_of_timeouts, &response, &tv);
 
-  packet.seq = 2;
+  seq++;
+  packet.seq = seq;
   packet.flags = 1;
   message_to_rec = (char*)&packet; 
   send_with_error(sockfd, (const char *)message_to_rec, sizeof(base_packet), MSG_CONFIRM, (const struct sockaddr *) &servaddr, sizeof(servaddr)); 
   printf("SYN + ACK received, sending ACK.\nConnection Established\n"); 
 
-  return 1;
+  return seq;
 }
 
 // Driver code 
@@ -60,7 +71,7 @@ int main() {
     char buffer[DATA_SIZE]; 
     char *hello = "Hello from client"; 
     struct sockaddr_in servaddr, cliaddr; 
-    int connection = 0;
+    int connection = -1;
     base_packet packet;
     base_packet packet_received;
   
@@ -90,7 +101,7 @@ int main() {
 
     socklen_t len;
 
-    while(connection != 1){
+    while(connection == -1){
       connection = connection_setup(sockfd, servaddr, tv, packet_received, packet, buffer, len);
     }
 

@@ -27,15 +27,12 @@ void reset_variables(int *timeout, int *response, struct timeval *tv){
 int connection_setup(int sockfd, struct sockaddr_in cliaddr, struct timeval tv, base_packet packet_received, base_packet packet, char* buffer, socklen_t len){
   packet.seq = 1;
   packet.flags = 3;
-  int response = -1, n_of_timeouts = 0, seq = -1;
+  int response = -1, nr_of_timeouts = 0, sender_seq = -1;
   char* message_to_send;
-
-  srand(time(0));
-  seq = rand() % 100;
   
   while(response < 0){
     response = recvfrom(sockfd, (char *)buffer, DATA_SIZE, MSG_WAITALL, (struct sockaddr *) &cliaddr, &len); 
-    printf("Response %d\n", response);
+    //printf("Response %d\n", response);
     buffer[response] = '\0'; 
     packet_received = *(base_packet*) buffer;
     printf("Sender: %d\n", packet_received.flags);
@@ -45,20 +42,22 @@ int connection_setup(int sockfd, struct sockaddr_in cliaddr, struct timeval tv, 
         message_to_send = (char*)&packet; 
         send_with_error(sockfd, (const char *)message_to_send, sizeof(base_packet), MSG_CONFIRM, (const struct sockaddr *) &cliaddr, len); 
         printf("Received faulty SYN / NACK or timeout, sending NACK.\n");
-        n_of_timeouts++;
+        nr_of_timeouts++;
         response = -1;
         tv.tv_sec = tv.tv_sec * 2;
         printf("TIMEOUT: %ld\n", tv.tv_sec);
-        if(n_of_timeouts == 10){
+        if(nr_of_timeouts == NR_OF_TIMEOUTS_ALLOWED){
             return -1;
         }
     }
+    sender_seq = packet_received.seq;
   }
 
-  reset_variables(&n_of_timeouts, &response, &tv);
+  reset_variables(&nr_of_timeouts, &response, &tv);
 
   packet.flags = 3;
-  packet.seq = 2;
+  sender_seq++;
+  packet.seq = sender_seq;
   message_to_send = (char*)&packet; 
   send_with_error(sockfd, (const char *)message_to_send, sizeof(base_packet), MSG_CONFIRM, (const struct sockaddr *) &cliaddr, len);  
   printf("SYN + ACK sent.\n");
@@ -73,18 +72,20 @@ int connection_setup(int sockfd, struct sockaddr_in cliaddr, struct timeval tv, 
         message_to_send = (char*)&packet; 
         send_with_error(sockfd, (const char *)message_to_send, sizeof(base_packet), MSG_CONFIRM, (const struct sockaddr *) &cliaddr, len); 
         printf("Received NACK or timeout, resending SYN + ACK.\n");
+        nr_of_timeouts++;
         response = -1;
         tv.tv_sec = tv.tv_sec * 2;
-        if(n_of_timeouts == 10){
+        if(nr_of_timeouts == NR_OF_TIMEOUTS_ALLOWED){
             return -1;
         }
     } 
+    sender_seq = packet_received.seq;
   }
 
-  reset_variables(&n_of_timeouts, &response, &tv);
+  reset_variables(&nr_of_timeouts, &response, &tv);
 
   printf("Connection established\n");
-  return seq;
+  return sender_seq;
 }
 
 // Driver code 
@@ -92,7 +93,7 @@ int main() {
     int sockfd; 
     char buffer[DATA_SIZE]; 
     struct sockaddr_in servaddr, cliaddr; 
-    int connection = 0;
+    int connection = -1;
     base_packet packet;
     base_packet packet_received;
       
@@ -132,9 +133,10 @@ int main() {
   
     len = sizeof(cliaddr);  //len is value/result
     
-    while(connection != 1){
+    while(connection == -1){
         connection = connection_setup(sockfd, cliaddr, tv, packet_received, packet, buffer, len);
     }
+    // printf("%d", connection);
 
     // n = recvfrom(sockfd, (char *)buffer, DATA_SIZE,  
     //             MSG_WAITALL, ( struct sockaddr *) &cliaddr, 
