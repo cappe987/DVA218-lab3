@@ -7,6 +7,7 @@
 #include <arpa/inet.h> 
 #include <netinet/in.h> 
 #include "../shared/base_packet.h"
+#include "../shared/crc32.h"
 #include "../shared/induce_errors.h"
 
 #define PORT     8080 
@@ -54,6 +55,32 @@ int main() {
 
     base_packet packet_received = *(base_packet*) buffer;
     printf("Server : %d\n", packet_received.seq); 
+
+
+
+
+    // Test loop for sending data packets.
+
+    char message[64];
+    // int i = 4;
+    while(1){
+      int seq;
+      printf("Enter SEQ: ");
+      scanf("%d", &seq);
+      while(getchar() != '\n');
+      printf("Enter message: ");
+      fgets(message, 64, stdin);
+      message[strlen(message)-1] = '\0';
+      base_packet packet;
+      packet.seq = seq;
+      memcpy(packet.data, message, 64);
+      crc_packet crcpacket;
+      crcpacket = create_crc((char*)&packet);
+      send_with_error(sockfd, (const char*)&crcpacket, sizeof(crc_packet), MSG_CONFIRM, (const struct sockaddr*) &servaddr, sizeof(servaddr));
+
+      // i = i + 8;
+
+    }
   
     close(sockfd); 
     return 0; 

@@ -7,6 +7,7 @@
 #include <arpa/inet.h> 
 #include <netinet/in.h> 
 #include "../shared/base_packet.h"
+#include "receiver_sliding_window.h"
   
 #define PORT     8080 
 #define MAXLINE 1024 
@@ -65,6 +66,8 @@ int main() {
         MSG_CONFIRM, (const struct sockaddr *) &cliaddr, 
             len); 
     printf("Message sent.\n");  
+
+    start_sliding_window(sockfd, cliaddr, 0);
       
     return 0; 
 } 
