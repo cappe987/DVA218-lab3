@@ -4,12 +4,12 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <sys/socket.h> 
-#include <sys/socket.h> 
 // #include <sys/types.h> 
 // #include <arpa/inet.h> 
 #include <netinet/in.h> 
 #include "../shared/base_packet.h"
 #include "../shared/crc32.h"
+#include "../shared/shared_functions.h"
 
 #define WINDOW_SIZE 64
 
@@ -87,7 +87,7 @@ int sequence_check(int front,
       int seqForIndex = window[back].seq + 1;
       int newfront = false;
 
-      for(int i = back + 1; i != back; i = (i+1) % WINDOW_SIZE){
+      for(int i = (back + 1) % WINDOW_SIZE; i != back; i = (i+1) % WINDOW_SIZE){
         if(i == front){ newfront = true;}
         if(seqForIndex == packet.seq){
           window[i] = packet;
@@ -108,6 +108,23 @@ void reset_window(base_packet window[WINDOW_SIZE]){
   for(int i = 0; i < WINDOW_SIZE; i++){
     window[i].seq = -1;
   }
+}
+
+int find_cumulative(int back, int front, int SEQ, base_packet window[WINDOW_SIZE]){
+  // int prev = window[back];
+  int prev = -1;
+  for(int i = back; i != front; i = (i + 1) % WINDOW_SIZE){
+    if(window[i].seq == -1){
+      if(prev == -1){
+        return SEQ;
+      }
+      else{
+        return prev;
+      }
+    }
+    prev = window[i].seq;
+  }
+  return prev;
 }
 
 void start_sliding_window(int sockfd, struct sockaddr_in cliaddr, int SEQ){ 
@@ -133,8 +150,10 @@ void start_sliding_window(int sockfd, struct sockaddr_in cliaddr, int SEQ){
                 &len); 
 
     crc_packet full_packet = *(crc_packet*) buffer;
+    base_packet packet = extract_base_packet(full_packet);
     if( ! error_check(read, full_packet)){
       // Send NACK
+      send_without_data(packet.seq, 8, sockfd, cliaddr);
       printf(">>> Failed CRC check\n");
       continue; // Restart loop
     }
@@ -143,16 +162,19 @@ void start_sliding_window(int sockfd, struct sockaddr_in cliaddr, int SEQ){
 
     // Packet passed error check
 
-    base_packet packet = extract_base_packet(full_packet);
     // Do sequence number check
     int res = sequence_check(windowFront, windowBack, window, packet, SEQ);
 
+    // ACK is sent no matter what the sequence check yields.
+    int cumulative = find_cumulative(windowBack, windowFront, SEQ, window);
+    send_without_data(cumulative, 1, sockfd, cliaddr);
+
     if(res < 0){
-      // Send ACK?
+      // // Send ACK?
       printf(">>> Sequence check failed\n");
     }
     else{
-      // Send ACK
+      // // Send ACK
       windowFront = res;
 
       // Move Back forward if it's received.

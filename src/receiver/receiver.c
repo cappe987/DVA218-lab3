@@ -11,6 +11,7 @@
 #include "../shared/induce_errors.h"
 #include "../shared/constants.h"  
 #include "../shared/shared_functions.h"
+#include "receiver_sliding_window.h"
 
 
 //ACK: 1 SYN: 2 FIN: 4 NACK: 8
@@ -127,7 +128,9 @@ int main() {
     while(sender_seq == -1){
         sender_seq = connection_setup(sockfd, cliaddr);
     }
-    // printf("%d", sender_seq);
+    printf("SEQ NUM: %d\n", sender_seq);
+
+    start_sliding_window(sockfd, cliaddr, sender_seq);
     
     return 0; 
 } 
