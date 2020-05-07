@@ -1,12 +1,13 @@
-#include "constants.h"
 #include <stdio.h> 
 #include <sys/socket.h> 
 #include <sys/time.h> 
+#include <netinet/in.h> 
+#include "utilities.h"
+#include "constants.h"
 #include "base_packet.h"
 #include "induce_errors.h"
 #include "crc32.h"
-#include <netinet/in.h> 
-#include "shared_functions.h"
+
 
 void reset_variables(int *timeout, int *response, struct timeval *tv){
     *timeout = 0;

@@ -9,7 +9,7 @@
 #include <netinet/in.h> 
 #include "../shared/base_packet.h"
 #include "../shared/crc32.h"
-#include "../shared/shared_functions.h"
+#include "../shared/utilities.h"
 
 #define WINDOW_SIZE 64
 
