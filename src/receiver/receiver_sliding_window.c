@@ -13,20 +13,6 @@
 
 #define WINDOW_SIZE 64
 
-// pthread_mutex_t data_lock;
-// char* data_to_send;
-// int position = 0;
-
-
-
-// void* wait_for_input(void* params){
-//   char buffer[100];
-//   while(1){
-//     fgets(buffer, 100, stdin);
-//     strcpy(&data_to_send[position], buffer);
-//     position = position + strlen(buffer);
-//   }
-// }
 
 int error_check(int read, crc_packet packet){
   if(read == 0){ // Socket has shut down, not sure if needed
@@ -82,6 +68,7 @@ int sequence_check(int front,
       // No back exists, use SEQ.
       int seqForIndex = SEQ;
       int newfront = false;
+
       for(int i = 0; i < WINDOW_SIZE; i++){
         if(i == front){newfront = true;}
         if(seqForIndex == packet.seq){
@@ -96,27 +83,16 @@ int sequence_check(int front,
     }
     else{
       printf("Back exists - try to find slot\n");
-      // if(packet.seq <= window[back].seq){
-      //   printf(">>> Seq is less than back\n");
-      //   // If packet is less than SEQ it's invalid seq, otherwise it's an already
-      //   // received packet.
-      //   return packet.seq < SEQ ? -1 : front;
-      // }
 
       int seqForIndex = window[back].seq + 1;
       int newfront = false;
-      // printf("BACK: %d\n", back);
+
       for(int i = back + 1; i != back; i = (i+1) % WINDOW_SIZE){
         if(i == front){ newfront = true;}
         if(seqForIndex == packet.seq){
           window[i] = packet;
           printf(">>> Found slot for packet on index %d\n", i);
           return newfront ? i : front;
-          // Check if "i" is new front.
-          // if(back < i && i < front + WINDOW_SIZE){
-          //   // eg. back = 22. front = 4. 22 < 45 < 68
-          //   // eg. back = 22. front = 35. 22 < 45 < 68
-          // }
         }
         seqForIndex++;
       }
@@ -126,79 +102,6 @@ int sequence_check(int front,
   printf(">>> No slot found\n");
 
   return -1;
-
-
-
-
-  // if(front == -1){
-  //   // For the first packet when there is nothing to compare to.
-  //   window[0] = packet;
-  //   return 0;
-  // }
-  // // else if(front == back){
-  // //   window[front] = packet;
-  // //   return front + 1;
-  // // }
-
-  // if(packet.seq <= window[front].seq && packet.seq >= window[back].seq){
-  //   // Packet inside window size.
-  //   int frontSeq = window[front].seq;
-  //   int diff = frontSeq - packet.seq;
-  //   int index = (front + WINDOW_SIZE - diff) % WINDOW_SIZE; 
-  //   if(window[index].seq == packet.seq){
-  //     printf(">>> Packet already in window\n");
-  //     // Packet received earlier.
-  //     return front;
-  //   }
-  //   else{
-  //     window[index] = packet;
-  //     printf(">>> Seq number in range of expected packets\n");
-  //     return front;
-  //     // Send ACK.
-  //   }
-  // } 
-  // else if(packet.seq < window[back].seq){
-  //   printf(">>> Seq number less than back of window\n");
-  //   return front;
-  //   // Old packet received. Send ACK
-  // }
-  // else if(packet.seq > window[front].seq){
-  //   printf(">>> Packet seq: %d | Front seq %d\n", packet.seq, window[front].seq);
-  //   // See if it fits in window, otherwise discard.
-  //   int seqForIndex = window[front].seq + 1;
-  //   int found = false;
-  //   for(int i = (front + 1) % WINDOW_SIZE; i != back; i = (i+1) % WINDOW_SIZE){
-  //     if(packet.seq == seqForIndex){
-  //       printf(">>> Packet placed in front\n");
-  //       // Place found;
-  //       found = true;
-  //       window[i] = packet;
-  //       // front = i; // Return or change via pointer?
-  //       printf(">>> Placed on index %d\n", i);
-  //       return i;
-  //     }
-  //     seqForIndex++;
-  //   }
-  //   if( ! found){
-  //     // Discard. Seq number does not fit in window.
-  //     printf(">>> Seq number does not fit in window\n");
-  //     return -1;
-  //   }
-  //   // return front; // Should not need this;
-  // }
-
-  
-  // printf(">>> Sequence check ended without result\n");
-  // return -1;
-  
-  // for(int i = back; i != front; i = (i+1) % WINDOW_SIZE){
-  //   // if(packet.seq < window[i].seq) // Discard. Old message
-  //   if(window[i].seq == packet.seq){
-  //     // Packet received earlier
-  //   }
-  //   else if(window[i].seq < )
-  // }
-
 }
 
 void reset_window(base_packet window[WINDOW_SIZE]){
@@ -269,22 +172,10 @@ void start_sliding_window(int sockfd, struct sockaddr_in cliaddr, int SEQ){
           reset_window(window);
         }
       }
-
-      // if(windowBack == windowFront){
-      //   printf("%s", window[windowBack].data);
-      //   // windowBack++;
-      //   // Reset since window is empty.
-      //   SEQ = window[windowBack].seq + 1;
-      //   windowBack = 0;
-      //   windowFront = -1;
-      // }
     }
     printf("\n");
 
   }
-
-
-
 
   // base_packet packet_received = *(base_packet*) buffer;
   // printf("Client : %d\n", packet_received.ack);
