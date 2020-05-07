@@ -1,5 +1,5 @@
-#ifndef SHARED_FUNCTIONS_H
-#define SHARED_FUNCTIONS_H
+#ifndef UTILITYS_H
+#define UTILITYS_H
 #include <sys/time.h>
 
 
