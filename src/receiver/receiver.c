@@ -10,6 +10,7 @@
 #include "../shared/base_packet.h"
 #include "../shared/induce_errors.h"
 #include "../shared/constants.h"  
+#include "../shared/shared_functions.h"
 
 
 //ACK: 1 SYN: 2 FIN: 4 NACK: 8
@@ -18,11 +19,7 @@
 //     char* buf = (char*)&packet; 
 //     return send_with_error(sockfd, buf, size, flags, addr, addr_len); 
 // }
-void reset_variables(int *timeout, int *response, struct timeval *tv){
-    *timeout = 0;
-    *response = -1;
-    tv->tv_sec = TIMEOUT;
-}
+
 
 int connection_setup(int sockfd, struct sockaddr_in cliaddr, struct timeval tv, base_packet packet_received, base_packet packet, char* buffer, socklen_t len){
   packet.seq = 1;
@@ -42,9 +39,7 @@ int connection_setup(int sockfd, struct sockaddr_in cliaddr, struct timeval tv, 
         message_to_send = (char*)&packet; 
         send_with_error(sockfd, (const char *)message_to_send, sizeof(base_packet), MSG_CONFIRM, (const struct sockaddr *) &cliaddr, len); 
         printf("Received faulty SYN / NACK or timeout, sending NACK.\n");
-        nr_of_timeouts++;
-        response = -1;
-        tv.tv_sec = tv.tv_sec * 2;
+        increment_timeout(&nr_of_timeouts, &response, sockfd, &tv);
         printf("TIMEOUT: %ld\n", tv.tv_sec);
         if(nr_of_timeouts == NR_OF_TIMEOUTS_ALLOWED){
             return -1;
@@ -72,9 +67,7 @@ int connection_setup(int sockfd, struct sockaddr_in cliaddr, struct timeval tv, 
         message_to_send = (char*)&packet; 
         send_with_error(sockfd, (const char *)message_to_send, sizeof(base_packet), MSG_CONFIRM, (const struct sockaddr *) &cliaddr, len); 
         printf("Received NACK or timeout, resending SYN + ACK.\n");
-        nr_of_timeouts++;
-        response = -1;
-        tv.tv_sec = tv.tv_sec * 2;
+        increment_timeout(&nr_of_timeouts, &response, sockfd, &tv);
         if(nr_of_timeouts == NR_OF_TIMEOUTS_ALLOWED){
             return -1;
         }
@@ -151,6 +144,6 @@ int main() {
     //     MSG_CONFIRM, (const struct sockaddr *) &cliaddr, 
     //         len); 
     // printf("Message sent.\n");  
-      
+    
     return 0; 
 } 
