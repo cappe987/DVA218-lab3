@@ -21,7 +21,21 @@
 // }
 
 
-int connection_setup(int sockfd, struct sockaddr_in cliaddr, struct timeval tv, base_packet packet_received, base_packet packet, char* buffer, socklen_t len){
+int connection_setup(int sockfd, struct sockaddr_in cliaddr){
+  char buffer[DATA_SIZE]; 
+  base_packet packet;
+  base_packet packet_received;
+  socklen_t len;
+  //socket timeout
+  struct timeval tv;
+  tv.tv_sec = TIMEOUT;
+  tv.tv_usec = 0;
+
+  if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv))< 0)
+  {
+    perror("Error");
+  }
+  len = sizeof(cliaddr);  //len is value/result
   packet.seq = 1;
   packet.flags = 3;
   int response = -1, nr_of_timeouts = 0, sender_seq = -1;
@@ -31,7 +45,6 @@ int connection_setup(int sockfd, struct sockaddr_in cliaddr, struct timeval tv, 
   while(response < 0){
     response = recvfrom(sockfd, (char *)buffer, DATA_SIZE, MSG_WAITALL, (struct sockaddr *) &cliaddr, &len); 
     //printf("Response %d\n", response);
-    buffer[response] = '\0'; 
     packet_received = *(base_packet*) buffer;
     printf("Sender: %d\n", packet_received.flags);
 
@@ -40,9 +53,8 @@ int connection_setup(int sockfd, struct sockaddr_in cliaddr, struct timeval tv, 
         message_to_send = (char*)&packet; 
         send_with_error(sockfd, (const char *)message_to_send, sizeof(base_packet), MSG_CONFIRM, (const struct sockaddr *) &cliaddr, len); 
         printf("Received faulty SYN / NACK or timeout, sending NACK.\n");
-        printf("NR OF TIMEOUTS: %d\n", nr_of_timeouts);
+
         increment_timeout(&nr_of_timeouts, &response, sockfd, &tv);
-        printf("NR OF TIMEOUTS: %d\n", nr_of_timeouts);
         printf("TIMEOUT: %ld\n", tv.tv_sec);
         if(nr_of_timeouts == NR_OF_TIMEOUTS_ALLOWED){
             return -1;
@@ -62,13 +74,13 @@ int connection_setup(int sockfd, struct sockaddr_in cliaddr, struct timeval tv, 
 
   while(response < 0){
     response = recvfrom(sockfd, (char *)buffer, DATA_SIZE, MSG_WAITALL, (struct sockaddr *) &cliaddr, &len); 
-    buffer[response] = '\0'; 
     packet_received = *(base_packet*) buffer;
     printf("Sender: %d\n", packet_received.flags);
 
     if(packet_received.flags != 1){
         message_to_send = (char*)&packet; 
         send_with_error(sockfd, (const char *)message_to_send, sizeof(base_packet), MSG_CONFIRM, (const struct sockaddr *) &cliaddr, len); 
+        
         printf("Received NACK or timeout, resending SYN + ACK.\n");
         increment_timeout(&nr_of_timeouts, &response, sockfd, &tv);
         if(nr_of_timeouts == NR_OF_TIMEOUTS_ALLOWED){
@@ -87,11 +99,8 @@ int connection_setup(int sockfd, struct sockaddr_in cliaddr, struct timeval tv, 
 // Driver code 
 int main() { 
     int sockfd; 
-    char buffer[DATA_SIZE]; 
     struct sockaddr_in servaddr, cliaddr; 
-    int connection = -1;
-    base_packet packet;
-    base_packet packet_received;
+    int sender_seq = -1;
       
     // Creating socket file descriptor 
     if ( (sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ) { 
@@ -115,38 +124,10 @@ int main() {
         exit(EXIT_FAILURE); 
     }
 
-    //socket timeout
-    struct timeval tv;
-    tv.tv_sec = TIMEOUT;
-    tv.tv_usec = 0;
-
-    if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv))< 0)
-    {
-        perror("Error");
+    while(sender_seq == -1){
+        sender_seq = connection_setup(sockfd, cliaddr);
     }
-      
-    socklen_t len;
-  
-    len = sizeof(cliaddr);  //len is value/result
-    
-    while(connection == -1){
-        connection = connection_setup(sockfd, cliaddr, tv, packet_received, packet, buffer, len);
-    }
-    // printf("%d", connection);
-
-    // n = recvfrom(sockfd, (char *)buffer, DATA_SIZE,  
-    //             MSG_WAITALL, ( struct sockaddr *) &cliaddr, 
-    //             &len); 
-    // buffer[n] = '\0'; 
-
-    // base_packet packet_received = *(base_packet*) buffer;
-    // printf("Client : %d\n", packet_received.flags);
-
-    // char* message_to_send = (char*)&packet; 
-    // sendto(sockfd, (const char *)message_to_send, sizeof(base_packet),  
-    //     MSG_CONFIRM, (const struct sockaddr *) &cliaddr, 
-    //         len); 
-    // printf("Message sent.\n");  
+    // printf("%d", sender_seq);
     
     return 0; 
 } 
