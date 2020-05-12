@@ -13,7 +13,7 @@
 
 int connection_setup(int sockfd, struct sockaddr_in servaddr){
   int response = -1, seq = -1, nr_of_timeouts = 0;
-  char buffer[DATA_SIZE]; 
+  char buffer[sizeof(crc_packet)]; 
   base_packet packet;
   base_packet packet_received;
   crc_packet full_packet;
@@ -37,7 +37,7 @@ int connection_setup(int sockfd, struct sockaddr_in servaddr){
   send_without_data(packet.seq, 2, sockfd, servaddr);
 
   while(response < 0){
-    response = recvfrom(sockfd, (char *)buffer, DATA_SIZE, MSG_WAITALL, (struct sockaddr *) &servaddr, &len); 
+    response = recvfrom(sockfd, (char *)buffer, sizeof(crc_packet), MSG_WAITALL, (struct sockaddr *) &servaddr, &len); 
     full_packet = *(crc_packet*) buffer;
     packet_received = extract_base_packet(full_packet);
 
