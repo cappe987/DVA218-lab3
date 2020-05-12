@@ -52,7 +52,7 @@ int connection_teardown(int sockfd, struct sockaddr_in servaddr, int sequence){
       }
     }
 
-  reset_variables(&nr_of_timeouts, &response, &tv);
+  // reset_variables(&nr_of_timeouts, &response, &tv);
 
   seq++;
   packet.flags = 1;

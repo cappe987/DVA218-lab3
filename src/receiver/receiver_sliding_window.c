@@ -130,13 +130,22 @@ void start_sliding_window(int sockfd, struct sockaddr_in cliaddr, int SEQ){
     if( ! error_check(read, full_packet)){
       // Send NACK
       send_without_data(packet.seq, 8, sockfd, cliaddr);
-      // printf(">>> Failed CRC check\n");
+      printf(">>> Failed CRC check\n");
       continue; // Restart loop
     }
 
     printf(">>> Passed CRC check\n");
 
     // Packet passed error check
+
+    if(packet.flags == 4){
+      // Fin
+      // Should it finish waiting for all packets and then exit?
+      return;
+    }
+    if(packet.flags > 0){
+      // What? Flags should only be able to be 4.
+    }
 
     // Do sequence number check
     int res = sequence_check(windowFront, windowBack, window, packet, SEQ);

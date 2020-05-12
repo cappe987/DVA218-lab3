@@ -21,6 +21,7 @@ struct sockaddr_in socket_addr;
 base_packet window[WINDOW_SIZE];
 int windowBack = 0;
 int windowFront = -1;
+int nr_of_timeouts = 0;
 
 pthread_mutex_t winlock;
 
@@ -47,45 +48,15 @@ void* input(void* params){
     windowFront++;
     window[windowFront] = packet;
 
-    // windowFront++;
-    // base_packet packet2 = packet;
-    // packet2.seq = packet.seq + 1;
-    // window[windowFront] = packet2;
-    // // window[MYSEQ-seq] = packet;
-    crc_packet crcpacket;
-
-    // // crc_packet crcpacket;
-    // crcpacket = create_crc((char*)&packet2);
-    // send_with_error(sock, (const char*)&crcpacket, sizeof(crc_packet), MSG_CONFIRM, (const struct sockaddr*) &socket_addr, sizeof(socket_addr));
-
-    crcpacket = create_crc((char*)&packet);
-    crcpacket.data[0] = 'X';
-    send_with_error(sock, (const char*)&crcpacket, sizeof(crc_packet), MSG_CONFIRM, (const struct sockaddr*) &socket_addr, sizeof(socket_addr));
-    pthread_mutex_unlock(&winlock);
     // crc_packet crcpacket;
     // crcpacket = create_crc((char*)&packet);
-    // send_with_error(socket, (const char*)&crcpacket, sizeof(crc_packet), MSG_CONFIRM, (const struct sockaddr*) &socket_addr, sizeof(socket_addr));
-
-    // i = i + 8;
-
+    // crcpacket.crc = 50; // Induce error for testing
+    // // crcpacket.data[0] = 'X';
+    // send_with_error(sock, (const char*)&crcpacket, sizeof(crc_packet), MSG_CONFIRM, (const struct sockaddr*) &socket_addr, sizeof(socket_addr));
+    pthread_mutex_unlock(&winlock);
   }
 }
 
-// Copy-pasted from receiver_sliding_window.c. Not good practice but too lazy.
-// int error_check(int read, crc_packet packet){
-//   if(read == 0){ // Socket has shut down, not sure if needed
-//     printf(">>> Socket closed for some reason\n");
-//     exit(1);
-//     // return false;
-//   }
-//   else if(read < 0){
-//     printf(">>> Error on recvfrom |%s|\n", strerror(errno));
-//   }
-//   else { // Successful read
-//     return valid_crc(packet);
-//   }
-//   return false;
-// }
 
 void reset_window(base_packet window[WINDOW_SIZE]){
   for(int i = 0; i < WINDOW_SIZE; i++){
@@ -151,12 +122,24 @@ void handle_response(base_packet packet){
     }
     pthread_mutex_unlock(&winlock);
   }
-  
-
 }
 
 
-void sender_sliding_window(int sockfd, struct sockaddr_in sockaddr, int SEQ){
+void resend_all(base_packet window[WINDOW_SIZE]){
+  pthread_mutex_lock(&winlock);
+  crc_packet full_packet;
+  for(int i = windowBack; i != windowFront + 1; i = (i + 1) % WINDOW_SIZE){
+    if(window[i].seq != -1){
+      full_packet = create_crc((char*)&window[i]);
+      send_with_error(sock, (const char*)&full_packet, sizeof(crc_packet), 
+          MSG_CONFIRM, (const struct sockaddr*) &socket_addr, sizeof(socket_addr));
+    }
+  }
+  pthread_mutex_unlock(&winlock);
+}
+
+
+int sender_sliding_window(int sockfd, struct sockaddr_in sockaddr, int SEQ){
   sock = sockfd;
   socket_addr = sockaddr;
   pthread_t input_thread;
@@ -164,9 +147,15 @@ void sender_sliding_window(int sockfd, struct sockaddr_in sockaddr, int SEQ){
   char buffer[sizeof(crc_packet)];
   socklen_t len;
 
-  for(int i = 0; i < WINDOW_SIZE; i++){
-    window[i].seq = -1;
-  }
+  struct timeval tv;
+  tv.tv_sec = TIMEOUT;
+  tv.tv_usec = 0;
+
+  // This is because someone wrote bullshit code. It is not actually used.
+  // int bullshit = -1; 
+  reset_timeout(&nr_of_timeouts, sockfd, &tv);
+
+  reset_window(window);
 
   pthread_create(&input_thread, NULL, input, &SEQ);
 
@@ -180,6 +169,14 @@ void sender_sliding_window(int sockfd, struct sockaddr_in sockaddr, int SEQ){
     // printf("READ: %d\n", read);
     if(read < 0){
       // Timeout
+      // // This is because someone wrote bullshit code. It is not actually used.
+      int bullshit = -1; 
+      increment_timeout(&nr_of_timeouts, &bullshit, sockfd, &tv);
+      if(nr_of_timeouts == NR_OF_TIMEOUTS_ALLOWED){
+        pthread_cancel(input_thread);
+        return -1;
+      }
+      resend_all(window);
     }
     else{
       crc_packet full_packet = *(crc_packet*)buffer;
@@ -188,6 +185,7 @@ void sender_sliding_window(int sockfd, struct sockaddr_in sockaddr, int SEQ){
         // CRC failed
       }
       else{
+        reset_timeout(&nr_of_timeouts, sockfd, &tv);
         // CRC passed
         // int result = handle_response(extract_base_packet(full_packet));
         handle_response(extract_base_packet(full_packet));
@@ -203,5 +201,5 @@ void sender_sliding_window(int sockfd, struct sockaddr_in sockaddr, int SEQ){
 
 
 
-
+  return 0;
 }
