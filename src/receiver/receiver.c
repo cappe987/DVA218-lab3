@@ -14,15 +14,6 @@
 #include "receiver_connection_setup.h"
 #include "../shared/utilities.h"
 
-
-//ACK: 1 SYN: 2 FIN: 4 NACK: 8
-
-// int send_nack(base_packet packet, int sockfd, size_t size, int flags, const struct sockaddr* addr, socklen_t addr_len){
-//     char* buf = (char*)&packet; 
-//     return send_with_error(sockfd, buf, size, flags, addr, addr_len); 
-// }
-
-
 // Driver code 
 int main() { 
     int sockfd; 
@@ -51,6 +42,7 @@ int main() {
         exit(EXIT_FAILURE); 
     }
 
+    //Connection setup function
     while(sender_seq == -1){
         sender_seq = connection_setup(sockfd, cliaddr);
     }
