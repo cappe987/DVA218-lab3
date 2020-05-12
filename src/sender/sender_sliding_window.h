@@ -1,0 +1,9 @@
+#ifndef SENDER_SLIDING_WINDOW_H
+#define SENDER_SLIDING_WINDOW_H
+
+
+void sender_sliding_window(int sockfd, struct sockaddr_in sockaddr, int SEQ);
+
+
+
+#endif

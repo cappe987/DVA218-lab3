@@ -32,3 +32,6 @@ FIN : 4
 NACK: 8
 ```
 So ACK + SYN = 3. SYN + FIN = 6. etc. It uses the same system as Linux file permissions.
+
+## To-do
+- [ ] Make sliding window receiver handle FIN's

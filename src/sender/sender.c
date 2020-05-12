@@ -14,6 +14,7 @@
 #include "../shared/constants.h"
 #include "../shared/utilities.h"
 #include "sender_connection_setup.h"
+#include "sender_sliding_window.h"
 
 //ACK: 1 SYN: 2 FIN: 4 NACK: 8
 
@@ -48,27 +49,28 @@ int main() {
 
         // Test loop for sending data packets.
 
-    char message[64];
-    // int i = 4;
-    while(1){
-      int seq;
-      printf("Enter SEQ: ");
-      scanf("%d", &seq);
-      while(getchar() != '\n');
-      printf("Enter message: ");
-      fgets(message, 64, stdin);
-      message[strlen(message)-1] = '\0';
-      base_packet packet;
-      packet.seq = seq;
-      memcpy(packet.data, message, 64);
-      crc_packet crcpacket;
-      crcpacket = create_crc((char*)&packet);
-      send_with_error(sockfd, (const char*)&crcpacket, sizeof(crc_packet), MSG_CONFIRM, (const struct sockaddr*) &servaddr, sizeof(servaddr));
+    // char message[64];
+    // // int i = 4;
+    // while(1){
+    //   int seq;
+    //   printf("Enter SEQ: ");
+    //   scanf("%d", &seq);
+    //   while(getchar() != '\n');
+    //   printf("Enter message: ");
+    //   fgets(message, 64, stdin);
+    //   message[strlen(message)-1] = '\0';
+    //   base_packet packet;
+    //   packet.seq = seq;
+    //   memcpy(packet.data, message, 64);
+    //   crc_packet crcpacket;
+    //   crcpacket = create_crc((char*)&packet);
+    //   send_with_error(sockfd, (const char*)&crcpacket, sizeof(crc_packet), MSG_CONFIRM, (const struct sockaddr*) &servaddr, sizeof(servaddr));
 
-      // i = i + 8;
+    //   // i = i + 8;
 
-    }
+    // }
   
+    sender_sliding_window(sockfd, servaddr, seq);
     
     return 0; 
 } 

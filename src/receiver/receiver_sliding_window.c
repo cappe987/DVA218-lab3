@@ -44,9 +44,9 @@ int sequence_check(int front,
     }
   }
   else{ // packet.seq >= SEQ. Find where it should go.
-    printf("packet.seq >= SEQ\n");
+    // printf("packet.seq >= SEQ\n");
     if(window[back].seq == -1){
-      printf("No back exists yet\n");
+      // printf("No back exists yet\n");
 
       // No back exists, use SEQ.
       int seqForIndex = SEQ;
@@ -65,7 +65,7 @@ int sequence_check(int front,
       return -1;
     }
     else{
-      printf("Back exists - try to find slot\n");
+      // printf("Back exists - try to find slot\n");
 
       int seqForIndex = window[back].seq + 1;
       int newfront = false;
@@ -94,20 +94,13 @@ void reset_window(base_packet window[WINDOW_SIZE]){
 }
 
 int find_cumulative(int back, int front, int SEQ, base_packet window[WINDOW_SIZE]){
-  // int prev = window[back];
-  int prev = -1;
-  for(int i = back; i != front; i = (i + 1) % WINDOW_SIZE){
-    if(window[i].seq == -1){
-      if(prev == -1){
-        return SEQ;
-      }
-      else{
-        return prev;
-      }
-    }
-    prev = window[i].seq;
+  int expects = SEQ;
+  int i = back;
+  while(window[i].seq != -1){
+    expects = window[i].seq + 1;
+    i = (i+1) % WINDOW_SIZE;
   }
-  return prev;
+  return expects;
 }
 
 void start_sliding_window(int sockfd, struct sockaddr_in cliaddr, int SEQ){ 
@@ -137,7 +130,7 @@ void start_sliding_window(int sockfd, struct sockaddr_in cliaddr, int SEQ){
     if( ! error_check(read, full_packet)){
       // Send NACK
       send_without_data(packet.seq, 8, sockfd, cliaddr);
-      printf(">>> Failed CRC check\n");
+      // printf(">>> Failed CRC check\n");
       continue; // Restart loop
     }
 
@@ -150,6 +143,7 @@ void start_sliding_window(int sockfd, struct sockaddr_in cliaddr, int SEQ){
 
     // ACK is sent no matter what the sequence check yields.
     int cumulative = find_cumulative(windowBack, windowFront, SEQ, window);
+    // printf(">>> Send ACK for seq %d, cumulative: %d ---- ", packet.seq, cumulative);
     send_without_data(cumulative, 1, sockfd, cliaddr);
 
     if(res < 0){

@@ -1,4 +1,6 @@
 #include <stdio.h> 
+#include <stdlib.h> 
+#include <string.h> 
 #include <sys/socket.h> 
 #include <sys/time.h> 
 #include <netinet/in.h> 
@@ -53,7 +55,7 @@ int error_check(int read, crc_packet packet){
     // return false;
   }
   else if(read < 0){
-    printf(">>> Error on recvfrom |%s|\n", strerror(errno));
+    // printf(">>> Error on recvfrom |%s|\n", strerror(errno));
   }
   else { // Successful read
     return valid_crc(packet);
