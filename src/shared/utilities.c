@@ -8,6 +8,8 @@
 #include "induce_errors.h"
 #include "crc32.h"
 #include <errno.h>
+#include <stdlib.h>
+#include <string.h>
 
 
 void reset_variables(int *timeout, int *response, struct timeval *tv){
