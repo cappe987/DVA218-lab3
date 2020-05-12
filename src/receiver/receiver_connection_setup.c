@@ -56,7 +56,7 @@ int connection_setup(int sockfd, struct sockaddr_in cliaddr){
     sender_seq = packet_received.seq;
   }
   
-  reset_variables(&nr_of_timeouts, &response, &tv);
+  reset_variables(&nr_of_timeouts, &response, sockfd, &tv);
 
   sender_seq++;
   packet.seq = sender_seq; 
@@ -88,7 +88,7 @@ int connection_setup(int sockfd, struct sockaddr_in cliaddr){
     sender_seq = packet_received.seq;
   }
 
-  reset_variables(&nr_of_timeouts, &response, &tv);
+  reset_variables(&nr_of_timeouts, &response, sockfd, &tv);
 
   tv.tv_sec = 0;
   if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv))< 0)
