@@ -20,6 +20,7 @@
 
 // Driver code 
 int main() { 
+    srand(time(0));
     int sockfd; 
     struct sockaddr_in servaddr; //, cliaddr; 
     int seq = -1;
@@ -70,6 +71,7 @@ int main() {
 
     // }
   
+    printf("------ STARTING SEQ: %d ------\n", seq);
     sender_sliding_window(sockfd, servaddr, seq);
     
     return 0; 

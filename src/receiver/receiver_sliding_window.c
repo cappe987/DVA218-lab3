@@ -157,7 +157,7 @@ void start_sliding_window(int sockfd, struct sockaddr_in cliaddr, int SEQ){
 
     if(res < 0){
       // // Send ACK?
-      printf(">>> Sequence check failed\n");
+      // printf(">>> Sequence check failed %d\n", packet.seq);
     }
     else{
       // // Send ACK

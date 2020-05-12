@@ -36,3 +36,7 @@ So ACK + SYN = 3. SYN + FIN = 6. etc. It uses the same system as Linux file perm
 ## To-do
 - [ ] Make sliding window receiver handle FIN's
 - [ ] Implement a system to quit.
+- [ ] Reset sender timeout when sending message.
+- [ ] Better print messages.
+- [ ] Limit Sender max window size to 16.
+- [ ] Global timeout for Receiver Sliding Window..
