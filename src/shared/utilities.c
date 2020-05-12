@@ -7,6 +7,7 @@
 #include "base_packet.h"
 #include "induce_errors.h"
 #include "crc32.h"
+#include <errno.h>
 
 
 void reset_variables(int *timeout, int *response, struct timeval *tv){
@@ -44,3 +45,19 @@ ssize_t send_without_data(int seq, int flag, int sockfd, struct sockaddr_in sock
       MSG_CONFIRM, (const struct sockaddr *)&sockaddr, len); 
 
 }
+
+int error_check(int read, crc_packet packet){
+  if(read == 0){ // Socket has shut down, not sure if needed
+    printf(">>> Socket closed for some reason\n");
+    exit(1);
+    // return false;
+  }
+  else if(read < 0){
+    printf(">>> Error on recvfrom |%s|\n", strerror(errno));
+  }
+  else { // Successful read
+    return valid_crc(packet);
+  }
+  return false;
+}
+

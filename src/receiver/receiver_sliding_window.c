@@ -10,24 +10,7 @@
 #include "../shared/base_packet.h"
 #include "../shared/crc32.h"
 #include "../shared/utilities.h"
-
-#define WINDOW_SIZE 64
-
-
-int error_check(int read, crc_packet packet){
-  if(read == 0){ // Socket has shut down, not sure if needed
-    printf(">>> Socket closed for some reason\n");
-    exit(1);
-    // return false;
-  }
-  else if(read < 0){
-    printf(">>> Error on recvfrom |%s|\n", strerror(errno));
-  }
-  else { // Successful read
-    return valid_crc(packet);
-  }
-  return false;
-}
+#include "../shared/constants.h"
 
 // Selective repeat
 // Returns negative number if failed.
