@@ -76,7 +76,7 @@ int connection_setup(int sockfd, struct sockaddr_in cliaddr){
       continue;
     }
 
-    if(packet_received.flags != 1){
+    if(packet_received.flags != 2){
         printf("Received NACK or timeout\n");
         send_without_data(packet.seq, 3, sockfd, cliaddr);
         
