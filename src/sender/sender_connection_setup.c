@@ -61,7 +61,7 @@ int connection_setup(int sockfd, struct sockaddr_in servaddr){
     }
   }
 
-  reset_variables(&nr_of_timeouts, &response, &tv);
+  reset_variables(&nr_of_timeouts, &response, sockfd, &tv);
 
   seq++;
   packet.seq = seq;
