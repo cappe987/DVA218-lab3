@@ -136,15 +136,13 @@ int start_sliding_window(int sockfd, struct sockaddr_in cliaddr, int SEQ){
     
     //No response
     if(read < 0){
-      printf("Response < 0 \n");
       increment_timeout(&nr_of_timeouts, sockfd, &tv);
-      printf("Timeout\n");
         if(nr_of_timeouts == NR_OF_TIMEOUTS_ALLOWED){
             return -1;
         }
         continue;
     }
-    
+
     reset_timeout(&nr_of_timeouts, sockfd, &tv);
 
     if( ! error_check(read, full_packet)){
