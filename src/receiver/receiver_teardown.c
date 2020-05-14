@@ -38,8 +38,6 @@ void connection_teardown(int sockfd, struct sockaddr_in cliaddr, int seqNr){
 
 
     send_without_data(sequanceNumber, 5, sockfd, cliaddr);
-
-    printf("Seq:%d\n", sequanceNumber);
     printf("--------\n");
     while(response < 0){
         sleep(1);
@@ -58,7 +56,6 @@ void connection_teardown(int sockfd, struct sockaddr_in cliaddr, int seqNr){
             //Resend FIN+ACK
             send_without_data(sequanceNumber, 5, sockfd, cliaddr);        
             printf("FIN + ACK resent %d times.\n", timeouts);
-            printf("Seq:%d\n", sequanceNumber);
             printf("--------\n");   
             continue;
         }
@@ -67,15 +64,14 @@ void connection_teardown(int sockfd, struct sockaddr_in cliaddr, int seqNr){
         //Check for faculty package
         if(!error_check(response, full_packet)){
             // Send NACK
-            send_without_data(sequanceNumber + 1, 8, sockfd, cliaddr);
             printf("Got corrupt packet\n");
+            send_without_data(sequanceNumber + 1, 8, sockfd, cliaddr);           
             printf("--------\n");
             response=-1;
             continue;
         }
         if(received_packet.flags == 8) {
             printf("NACK received, Resend FIN + ACK\n");
-            printf("Seq:%d\n", sequanceNumber);
             send_without_data(sequanceNumber, 5, sockfd, cliaddr);
             printf("--------\n");
             response=-1;        
@@ -83,13 +79,21 @@ void connection_teardown(int sockfd, struct sockaddr_in cliaddr, int seqNr){
         }
 
         if(received_packet.seq != sequanceNumber +1) {
-            printf("Got seq number: %d. Expected seq number: %d\n", received_packet.seq, sequanceNumber+1);
-            response = -1;
-            printf("--------\n");
-            continue;
+            if (received_packet.seq = sequanceNumber -1 && received_packet.flags == 4)
+            {
+                send_without_data(sequanceNumber, 5, sockfd, cliaddr);
+                printf("--------\n");
+            }
+            else{
+                printf("Got seq number: %d. Expected seq number: %d\n", received_packet.seq, sequanceNumber+1);
+                response = -1;
+                printf("--------\n");
+                continue;
+            }
+
         }
     
-        printf("ACK got: Seq:%d\n",received_packet.seq);
+        printf("ACK got (SEQ %d)\n",received_packet.seq);
         printf("Receiver: connection teardown complete.\n");
     
         close(sockfd);

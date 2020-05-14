@@ -21,8 +21,7 @@ int connection_teardown(int sockfd, struct sockaddr_in servaddr, int sequence){
     struct timeval tv = { TIMEOUT, 0 };
     setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
 
-    send_without_data(seq, 4, sockfd, servaddr);
-    printf("Seq:%d\n", seq);    
+    send_without_data(seq, 4, sockfd, servaddr);  
     printf("--------\n");
 
     while(response < 0){
@@ -40,7 +39,6 @@ int connection_teardown(int sockfd, struct sockaddr_in servaddr, int sequence){
             //Resend FIN
             send_without_data(seq, 4, sockfd, servaddr);        
             printf("FIN resent %d times.\n", nr_of_timeouts);
-            printf("Seq:%d\n", seq);
             printf("--------\n");   
             continue;
         }
@@ -59,7 +57,8 @@ int connection_teardown(int sockfd, struct sockaddr_in servaddr, int sequence){
 
         if(packet_received.flags == 8){      
             printf("Received NACK, FIN resent.\n");
-            send_without_data(seq, 8, sockfd, servaddr);
+            send_without_data(seq, 4, sockfd, servaddr);
+            printf("--------\n");
             response=-1;        
             continue;
         }
@@ -71,21 +70,21 @@ int connection_teardown(int sockfd, struct sockaddr_in servaddr, int sequence){
         }
 
     }
-    printf("FIN + ACK got\n");
-    printf("Seq:%d\n",packet_received.seq);
+    printf("FIN + ACK got (SEQ %d)\n",packet_received.seq);
     printf("--------\n");
     seq+=2;  
     send_without_data(seq, 1, sockfd, servaddr); 
-    printf("ACK sent. Seq:%d\n",seq);
   
-    struct timeval tv2 = { 10, 0 };
+  
+    struct timeval tv2 = { 5, 0 };
     setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &tv2, sizeof(struct timeval));
     while(response > -1){
         response = recvfrom(sockfd, (char *)buffer, DATA_SIZE, MSG_WAITALL, (struct sockaddr *) &servaddr, &len); 
         if (response > 0)
         {
-        send_without_data(seq, 1, sockfd, servaddr);
-        printf("Received NACK, resent ACK");
+            printf("Received NACK, resent ACK");
+            send_without_data(seq, 1, sockfd, servaddr);
+            printf("--------\n");
         }
     
     }
