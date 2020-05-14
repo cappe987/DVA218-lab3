@@ -11,7 +11,7 @@
 
 int connection_teardown(int sockfd, struct sockaddr_in servaddr, int sequence){   
     
-    printf("Sender: connection teardown initialized.\n");
+    printf("Sender: connection teardown initialized.\n\n");
     int response = -1, seq = sequence+1, nr_of_timeouts = 0;
     char buffer[sizeof(crc_packet)]; 
     base_packet packet_received;
@@ -21,8 +21,9 @@ int connection_teardown(int sockfd, struct sockaddr_in servaddr, int sequence){
     struct timeval tv = { TIMEOUT, 0 };
     setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
 
-    send_without_data(seq, 4, sockfd, servaddr);     
-    printf("FIN sent. Seq:%d\n",seq);
+    send_without_data(seq, 4, sockfd, servaddr);
+    printf("Seq:%d\n", seq);    
+    printf("--------\n");
 
     while(response < 0){
         response = recvfrom(sockfd, (char *)buffer, sizeof(crc_packet), MSG_WAITALL, (struct sockaddr *) &servaddr, &len); 
@@ -38,18 +39,28 @@ int connection_teardown(int sockfd, struct sockaddr_in servaddr, int sequence){
             }
             //Resend FIN
             send_without_data(seq, 4, sockfd, servaddr);        
-            printf("FIN resent %d times.\n", nr_of_timeouts);   
+            printf("FIN resent %d times.\n", nr_of_timeouts);
+            printf("Seq:%d\n", seq);
+            printf("--------\n");   
             continue;
         }
         crc_packet full_packet = *(crc_packet*) buffer;
         packet_received = extract_base_packet(full_packet);
-        printf("Got: %d\n", full_packet.crc);
+        
         if(!error_check(response, full_packet)){
             // Send NACK
             sleep(1);
+            printf("Got corrupt packet\n");
             send_without_data(seq + 1, 8, sockfd, servaddr);
-            printf("Failed CRC check, send NACK\n");
+            printf("--------\n");
             response=-1;
+            continue;
+        }
+
+        if(packet_received.flags == 8){      
+            printf("Received NACK, FIN resent.\n");
+            send_without_data(seq, 8, sockfd, servaddr);
+            response=-1;        
             continue;
         }
 
@@ -58,30 +69,27 @@ int connection_teardown(int sockfd, struct sockaddr_in servaddr, int sequence){
             response = -1;
             continue;
         }
-        if(packet_received.flags == 8){      
-            printf("Received NACK, FIN resent.\n");
-            send_without_data(seq, 8, sockfd, servaddr);
-            response=-1;        
-            continue;
-        }
-    }
 
-  seq+=2;  
-  send_without_data(seq, 1, sockfd, servaddr); 
-  printf("ACK sent. Seq:%d\n",seq);
-  
-  struct timeval tv2 = { 10, 0 };
-  setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &tv2, sizeof(struct timeval));
-  while(response > -1){
-    response = recvfrom(sockfd, (char *)buffer, DATA_SIZE, MSG_WAITALL, (struct sockaddr *) &servaddr, &len); 
-    if (response > 0)
-    {
-      send_without_data(seq, 1, sockfd, servaddr);
-      printf("Received NACK, resent ACK");
     }
+    printf("FIN + ACK got\n");
+    printf("Seq:%d\n",packet_received.seq);
+    printf("--------\n");
+    seq+=2;  
+    send_without_data(seq, 1, sockfd, servaddr); 
+    printf("ACK sent. Seq:%d\n",seq);
+  
+    struct timeval tv2 = { 10, 0 };
+    setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &tv2, sizeof(struct timeval));
+    while(response > -1){
+        response = recvfrom(sockfd, (char *)buffer, DATA_SIZE, MSG_WAITALL, (struct sockaddr *) &servaddr, &len); 
+        if (response > 0)
+        {
+        send_without_data(seq, 1, sockfd, servaddr);
+        printf("Received NACK, resent ACK");
+        }
     
-  }
-  printf("Sender: connection teardown complete.\n");
-  close(sockfd); 
-  return 1;
+    }
+    printf("Sender: connection teardown complete.\n");
+    close(sockfd); 
+    return 1;
 }
