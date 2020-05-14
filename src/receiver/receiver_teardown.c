@@ -12,7 +12,7 @@
 
 void connection_teardown(int sockfd, struct sockaddr_in cliaddr, int seqNr){
     
-    printf("Receiver connection teardown initialized.\n");
+    printf("Receiver: connection teardown initialized.\n");
     int response = -1, sequanceNumber = seqNr+1,timeouts = -1;
     base_packet received_packet;
     char buffer[sizeof(crc_packet)];  
@@ -23,9 +23,23 @@ void connection_teardown(int sockfd, struct sockaddr_in cliaddr, int seqNr){
     increment_timeout(&timeouts, sockfd, &tv);
     response = -1;
     //Send FIN+ACK
+
+    //Testing snippet
+    //---------------------------------
+    while(response < 0)
+    {
+        response = recvfrom(sockfd, (char *)buffer, sizeof(crc_packet), MSG_WAITALL, (struct sockaddr *) &cliaddr, &len);
+    }
+    printf("FIN got\n");
+    response=-1;
+
+
+    //---------------------------------
+
+
     send_without_data(sequanceNumber, 5, sockfd, cliaddr);
     printf("FIN + ACK sent.\n");
-    
+ 
     while(response < 0){
         response = recvfrom(sockfd, (char *)buffer, sizeof(crc_packet), MSG_WAITALL, (struct sockaddr *) &cliaddr, &len);
         //Check for timeout
@@ -46,6 +60,7 @@ void connection_teardown(int sockfd, struct sockaddr_in cliaddr, int seqNr){
             printf("FIN + ACK resent %d times.\n", timeouts);   
             continue;
         }
+        printf("Hello!\n");
         crc_packet full_packet = *(crc_packet*) buffer;
         received_packet = extract_base_packet(full_packet);
         printf("Got packet!\n");
@@ -54,14 +69,19 @@ void connection_teardown(int sockfd, struct sockaddr_in cliaddr, int seqNr){
             // Send NACK
             send_without_data(received_packet.seq, 8, sockfd, cliaddr);
             printf("'Waiting for last ack' state failed CRC check\n");
+            response=-1;
             continue;
         }
-        else
+        if(received_packet.flags == 8)
         {
-            printf("Last ACK received. Shuting down\n");
-            close(sockfd);
-            return;
+            printf("NACK received, Resend FIN + ACK\n"); 
+            send_without_data(sequanceNumber, 5, sockfd, cliaddr);
+            response=-1;        
+            continue;
         }
+        printf("Receiver: connection teardown complete.\n");
+        close(sockfd);
+        return;
+        
     }
 }
-

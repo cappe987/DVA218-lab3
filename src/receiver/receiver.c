@@ -14,6 +14,16 @@
 #include "receiver_sliding_window.h"
 #include "receiver_connection_setup.h"
 #include "../shared/utilities.h"
+#include "receiver_teardown.h"
+
+
+//ACK: 1 SYN: 2 FIN: 4 NACK: 8
+
+// int send_nack(base_packet packet, int sockfd, size_t size, int flags, const struct sockaddr* addr, socklen_t addr_len){
+//     char* buf = (char*)&packet; 
+//     return send_with_error(sockfd, buf, size, flags, addr, addr_len); 
+// }
+
 
 // Driver code 
 int main() { 
@@ -53,6 +63,13 @@ int main() {
     }
 
     receiver_sliding_window(sockfd, cliaddr, sender_seq);
+    //while(sender_seq == -1){
+    //    sender_seq = connection_setup(sockfd, cliaddr);
+    //}
+    //printf("SEQ NUM: %d\n", sender_seq);
+
+    //start_sliding_window(sockfd, cliaddr, sender_seq);
+   //void connection_teardown(int sockfd, struct sockaddr_in cliaddr, int seqNr);
     
     return 0; 
 } 
