@@ -20,7 +20,8 @@ void connection_teardown(int sockfd, struct sockaddr_in cliaddr, int seqNr){
 
     //Reset socket timeout timer
     struct timeval tv = { TIMEOUT/2, 0 };
-    increment_timeout(&timeouts, &response, sockfd, &tv);
+    increment_timeout(&timeouts, sockfd, &tv);
+    response = -1;
     //Send FIN+ACK
     send_without_data(sequanceNumber, 5, sockfd, cliaddr);
     printf("FIN + ACK sent.\n");
@@ -31,7 +32,8 @@ void connection_teardown(int sockfd, struct sockaddr_in cliaddr, int seqNr){
         if (response < 0)
         {
             
-            increment_timeout(&timeouts, &response, sockfd, &tv);
+            increment_timeout(&timeouts, sockfd, &tv);
+            response = -1;
             //Check for lost connection
             if(timeouts >= NR_OF_TIMEOUTS_ALLOWED)
             {

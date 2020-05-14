@@ -164,8 +164,8 @@ int sender_sliding_window(int sockfd, struct sockaddr_in sockaddr, int SEQ){
     if(read < 0){
       // Timeout
       // // This is because someone wrote bullshit code. It is not actually used.
-      int bullshit = -1; 
-      increment_timeout(&nr_of_timeouts, &bullshit, sockfd, &tv);
+      // int bullshit = -1; 
+      increment_timeout(&nr_of_timeouts, sockfd, &tv);
       if(nr_of_timeouts == NR_OF_TIMEOUTS_ALLOWED){
         pthread_cancel(input_thread);
         return -1;

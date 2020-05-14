@@ -44,7 +44,8 @@ int connection_teardown(int sockfd, struct sockaddr_in servaddr, int sequence){
         send_with_error(sockfd, (const char *)message_to_rec, sizeof(base_packet), MSG_CONFIRM, (const struct sockaddr *) &servaddr, sizeof(servaddr)); 
         printf("Received NACK or timeout, FIN resent.\n");
         
-        increment_timeout(&nr_of_timeouts, &response, sockfd, &tv);
+        increment_timeout(&nr_of_timeouts, sockfd, &tv);
+        response = -1;
         if(nr_of_timeouts == NR_OF_TIMEOUTS_ALLOWED){
             close(sockfd);
             return 1;
