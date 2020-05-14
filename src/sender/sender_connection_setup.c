@@ -43,30 +43,33 @@ int connection_setup(int sockfd, struct sockaddr_in servaddr){
 
     printf("Receiver: %d\n", packet_received.flags);
 
+    if(response < 0){
+      increment_timeout(&nr_of_timeouts, sockfd, &tv);
+      printf("Timeout\n");
+        if(nr_of_timeouts == NR_OF_TIMEOUTS_ALLOWED){
+            return -1;
+        }
+        send_without_data(packet.seq, 2, sockfd, servaddr);
+        continue;
+    }
+
     if( ! error_check(response, full_packet)){
       // Send NACK
-      printf(">>> Failed CRC check\n");
+      printf("Error check 1\n");
       send_without_data(packet.seq, 8, sockfd, servaddr);
+      response = -1;
       continue;
     }
 
     if(packet_received.flags != 3){
       printf("Received NACK or timeout\n");
       send_without_data(packet.seq, 2, sockfd, servaddr);
-
-      increment_timeout(&nr_of_timeouts, &response, sockfd, &tv);
-      if(nr_of_timeouts == NR_OF_TIMEOUTS_ALLOWED){
-            return -1;
-        }
     }
   }
 
-  reset_variables(&nr_of_timeouts, &response, sockfd, &tv);
-
-  seq++;
-  packet.seq = seq;
+  reset_variables(&nr_of_timeouts, sockfd, &tv);
   printf("SYN + ACK received\nConnection Established\n"); 
-  send_without_data(packet.seq, 2, sockfd, servaddr);
+  send_without_data(packet.seq, 1, sockfd, servaddr);
 
   tv.tv_sec = 0;
   if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv))< 0)
