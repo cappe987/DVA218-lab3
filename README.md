@@ -38,7 +38,7 @@ So ACK + SYN = 3. SYN + FIN = 6. etc. It uses the same system as Linux file perm
 - [X] Implement a system to quit.
 - [ ] Reset sender timeout when sending message.
 - [ ] Better print messages.
-- [ ] Limit Sender max window size to 16.
+- [X] Limit Sender max window size to 16.
 - [X] Global timeout for Receiver Sliding Window.
 - [ ] Implement go-back-N.
 - [ ] Auto-send testing system.

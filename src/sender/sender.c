@@ -14,6 +14,7 @@
 #include "../shared/constants.h"
 #include "../shared/utilities.h"
 #include "sender_connection_setup.h"
+#include "sender_teardown.h"
 #include "sender_sliding_window.h"
 
 //ACK: 1 SYN: 2 FIN: 4 NACK: 8
@@ -49,7 +50,9 @@ int main() {
         }
     }
 
-    // connection_teardown(sockfd, servaddr, seq);
+    sender_sliding_window(sockfd, servaddr, seq);
+
+    connection_teardown(sockfd, servaddr, 1);
 
         // Test loop for sending data packets.
 
@@ -74,7 +77,6 @@ int main() {
 
     // }
   
-    sender_sliding_window(sockfd, servaddr, seq);
     
     return 0; 
 } 

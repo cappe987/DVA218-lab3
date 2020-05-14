@@ -13,7 +13,8 @@
 #include "../shared/constants.h"
 #include "../shared/induce_errors.h"
 
-#define WINDOW_SIZE 64
+// #define WINDOW_SIZE 4
+#define WIN_MAX_SIZE 16
 
 int sock;
 struct sockaddr_in socket_addr;
@@ -21,9 +22,20 @@ struct sockaddr_in socket_addr;
 base_packet window[WINDOW_SIZE];
 int windowBack = 0;
 int windowFront = -1;
+int buffer_front = -1;
 int nr_of_timeouts = 0;
+int packets_in_window = 0;
 
 pthread_mutex_t winlock;
+
+int back_front_diff(int back, int front){
+  if(back <= front){
+    return front - back;
+  }
+  else{
+    return (WINDOW_SIZE - back) + front;
+  }
+}
 
 void* input(void* params){
   int seq = *(int*)params;
@@ -35,7 +47,7 @@ void* input(void* params){
     // printf("Enter SEQ: ");
     // scanf("%d", &MYSEQ);
     // while(getchar() != '\n');
-    printf("Enter message: ");
+    printf("Enter message for SEQ %d: ", seq);
     fgets(message, DATA_SIZE, stdin);
     message[strlen(message)-1] = '\0';
     base_packet packet;
@@ -48,15 +60,45 @@ void* input(void* params){
 
     pthread_mutex_lock(&winlock);
 
-    windowFront++;
-    window[windowFront] = packet;
+    if(packets_in_window == WINDOW_SIZE - 1){
+      printf("Window full\n");
+      seq--;
+      pthread_mutex_unlock(&winlock);
+      continue;
+    }
+    buffer_front = (buffer_front + 1) % WINDOW_SIZE;
+    window[buffer_front] = packet;
+    packets_in_window++;
 
+    if(back_front_diff(windowBack, windowFront) < WIN_MAX_SIZE - 1 || windowFront == -1){
+      windowFront = (windowFront + 1) % WINDOW_SIZE;
+      crc_packet crcpacket;
+      crcpacket = create_crc((char*)&packet);
+      // crcpacket.crc = 50; // Induce error for testing
+      // crcpacket.data[0] = 'X';
+      send_with_error(sock, (const char*)&crcpacket, sizeof(crc_packet), MSG_CONFIRM, (const struct sockaddr*) &socket_addr, sizeof(socket_addr));
+
+    }
+    else{
+      printf("Didn't send %d\n", packet.seq);
+    }
+    pthread_mutex_unlock(&winlock);
+  }
+}
+
+void send_more(base_packet window[WINDOW_SIZE]){
+  while(windowFront != buffer_front){
+    windowFront = (windowFront + 1) % WINDOW_SIZE;
     crc_packet crcpacket;
-    crcpacket = create_crc((char*)&packet);
+    crcpacket = create_crc((char*)&window[windowFront]);
     // crcpacket.crc = 50; // Induce error for testing
     // crcpacket.data[0] = 'X';
+    printf("Sending packet %d\n", window[windowFront].seq);
     send_with_error(sock, (const char*)&crcpacket, sizeof(crc_packet), MSG_CONFIRM, (const struct sockaddr*) &socket_addr, sizeof(socket_addr));
-    pthread_mutex_unlock(&winlock);
+    if( ! (back_front_diff(windowBack, windowFront) < WIN_MAX_SIZE - 1)){
+      return;
+    }
+
   }
 }
 
@@ -77,17 +119,23 @@ void handle_response(base_packet packet){
     // }
     // int i = windowBack;
     // while(window[i].seq != -1 && window[i].seq <= packet.seq){
-    while(window[windowBack].seq <= packet.seq && windowBack != windowFront + 1){
+    while(window[windowBack].seq < packet.seq && windowBack != windowFront + 1){
       // printf("WINSEQ: %d\n", window[i].seq);
       printf(">>> SEQ %d ACKED\n", window[windowBack].seq);
       window[windowBack].seq = -1;
       windowBack = (windowBack + 1) % WINDOW_SIZE;
+      packets_in_window--;
     }
 
-    if(windowBack == windowFront + 1){ // Window is empty.
+    // printf("Back: %d, Front: %d, BufferFront: %d\n", windowBack, windowFront, buffer_front);
+    if(windowBack == buffer_front + 1 && windowFront == buffer_front){ // Window is empty.
       windowBack = 0;
       windowFront = -1;
+      buffer_front = -1;
       reset_window(window);
+    }
+    else{
+      send_more(window);
     }
     pthread_mutex_unlock(&winlock);
     printf(">>> Next expected is %d\n", packet.seq);

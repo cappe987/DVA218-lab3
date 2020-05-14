@@ -103,7 +103,7 @@ int find_cumulative(int back, int front, int SEQ, base_packet window[WINDOW_SIZE
   return expects;
 }
 
-int start_sliding_window(int sockfd, struct sockaddr_in cliaddr, int SEQ){ 
+int receiver_sliding_window(int sockfd, struct sockaddr_in cliaddr, int SEQ){ 
   printf(">>> Sliding window started\n");
 
   int windowBack  = 0;
