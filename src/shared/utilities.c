@@ -53,7 +53,7 @@ ssize_t send_without_data(int seq, int flag, int sockfd, struct sockaddr_in sock
   if(flag % 8  == 4){printf("FIN "); flag = flag - 4;}
   if(flag % 16 == 8){printf("NACK ");}
 
-  printf("\n");
+  printf("(SEQ %d)\n",seq);
 
   crc_packet full_packet = create_crc((char*)&packet);
   return send_with_error(sockfd, (const char *)&full_packet, sizeof(crc_packet),  
