@@ -12,10 +12,29 @@
 #include "../shared/utilities.h"
 #include "../shared/constants.h"
 
+#define USING_SELECTIVE_REPEAT 1
+
+// go-back-N
+
+int waiting_for_resends = 0;
+
+int go_back_n(int front,
+              int back,
+              base_packet window[WINDOW_SIZE],
+              base_packet packet,
+              int SEQ){
+
+  if(packet.seq == SEQ){
+    window[back] = packet;
+    return front + 1;
+  }
+  return -1;
+}
+
 // Selective repeat
 // Returns negative number if failed.
 // Otherwise returns new "front"
-int sequence_check(int front, 
+int selective_repeat(int front, 
                    int back, 
                    base_packet window[WINDOW_SIZE], 
                    base_packet packet, 
@@ -105,6 +124,12 @@ int find_cumulative(int back, int front, int SEQ, base_packet window[WINDOW_SIZE
 
 int receiver_sliding_window(int sockfd, struct sockaddr_in cliaddr, int SEQ){ 
   printf(">>> Sliding window started\n");
+  if(USING_SELECTIVE_REPEAT){
+    printf("Using selective repeat\n");
+  }
+  else{
+    printf("Using go-back-n\n");
+  }
 
   int windowBack  = 0;
   int windowFront = -1;
@@ -166,13 +191,33 @@ int receiver_sliding_window(int sockfd, struct sockaddr_in cliaddr, int SEQ){
     //   continue;
     // }
 
-    // Do sequence number check
-    int res = sequence_check(windowFront, windowBack, window, packet, SEQ);
+    int res = -1;
 
-    // ACK is sent no matter what the sequence check yields.
-    int cumulative = find_cumulative(windowBack, windowFront, SEQ, window);
-    // printf(">>> Send ACK for seq %d, cumulative: %d ---- ", packet.seq, cumulative);
-    send_without_data(cumulative, 1, sockfd, cliaddr);
+    printf("PACKET: %d\n", packet.seq);
+    // Do sequence number check
+    if(USING_SELECTIVE_REPEAT){ // Selective repeat
+      res = selective_repeat(windowFront, windowBack, window, packet, SEQ);
+
+      // ACK is sent no matter what the sequence check yields.
+      int cumulative = find_cumulative(windowBack, windowFront, SEQ, window);
+      // printf(">>> Send ACK for seq %d, cumulative: %d ---- ", packet.seq, cumulative);
+      send_without_data(cumulative, 1, sockfd, cliaddr);
+    }
+    else { // go-back-n
+      res = go_back_n(windowFront, windowBack, window, packet, SEQ);
+      if(res < 0 && waiting_for_resends == 0){ // Go back
+        send_without_data(SEQ, 1, sockfd, cliaddr);
+        waiting_for_resends = 1;
+      }
+      else if(res >= 0 && waiting_for_resends == 1){ // Resends found
+        send_without_data(SEQ + 1, 1, sockfd, cliaddr);
+        waiting_for_resends = 0;
+      }
+      else if(res >= 0){ // Message received, just send ACK.
+        send_without_data(SEQ + 1, 1, sockfd, cliaddr);
+
+      }
+    }
 
     if(res < 0){
       // // Send ACK?

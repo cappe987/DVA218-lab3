@@ -48,7 +48,7 @@ ssize_t send_without_data(int seq, int flag, int sockfd, struct sockaddr_in sock
   packet.seq = seq;
   packet.flags = flag;
   printf("Sent ");
-  if(flag % 2  == 1){printf("ACK "); flag = flag - 1;}
+  if(flag % 2  == 1){printf("ACK (SEQ %d)", seq); flag = flag - 1;}
   if(flag % 4  == 2){printf("SYN "); flag = flag - 2;}
   if(flag % 8  == 4){printf("FIN "); flag = flag - 4;}
   if(flag % 16 == 8){printf("NACK ");}
