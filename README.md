@@ -36,11 +36,12 @@ So ACK + SYN = 3. SYN + FIN = 6. etc. It uses the same system as Linux file perm
 ## To-do
 - [X] Make sliding window receiver handle FIN's
 - [X] Implement a system to quit.
-- [ ] Reset sender timeout when sending message.
 - [ ] Better print messages.
 - [X] Limit Sender max window size to 16.
 - [X] Global timeout for Receiver Sliding Window.
-- [ ] Implement go-back-N.
+- [X] Implement go-back-N.
 - [ ] Auto-send testing system.
 - [ ] Test with only packet-lost enabled and only packet-corrupt enabled.
 - [ ] Put header files separately.
+- [ ] Sender Window: send all data before sending quit and going to teardown.
+- [ ] Use semaphore for packets_in_window in Sender Window.
