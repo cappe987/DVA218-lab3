@@ -48,12 +48,18 @@ int main() {
       if(seq == -1){
             printf("Connection reset\n");
         }
+
+        seq = sender_sliding_window(sockfd, servaddr, seq);
+
+        if(seq == -1){
+            printf("Connection to receiver lost, restarting setup\n");
+        }
+        else{
+            printf("Connection teardown initiated\n"); 
+            connection_teardown(sockfd, servaddr, seq);
+            return 0;
+        }
     }
-
-    sender_sliding_window(sockfd, servaddr, seq);
-
-    connection_teardown(sockfd, servaddr, 1);
-
         // Test loop for sending data packets.
 
     // char message[64];

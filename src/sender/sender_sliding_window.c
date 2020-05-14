@@ -28,8 +28,11 @@ int windowFront = -1;
 int buffer_front = -1;
 int nr_of_timeouts = 0;
 int packets_in_window = 0;
+int last_SEQ = 0;
+int current_SEQ = 0;
 
 pthread_mutex_t winlock;
+pthread_mutex_t acklock;
 sem_t empty;
 
 int back_front_diff(int back, int front){
@@ -51,28 +54,30 @@ void* input(void* params){
     int packets_to_send;
     int nr_of_packets;
     char letter;
-    
-    while(1){
+    int loops = 0;
+    last_SEQ = seq;
+    while(loops != NUMBER_OF_LOOPS){
       
       nr_of_packets = 0;
-      packets_to_send = rand() % (WINDOW_SIZE - 1);
+      packets_to_send = rand() % PACKETS_TO_SEND;
+      last_SEQ = last_SEQ + packets_to_send;
       letter = '0';
       printf("Number of packets to send: %d\n", packets_to_send);
 
+      //Sends all the amount of packets that were generated
       while(nr_of_packets !=  packets_to_send){
-
         
         message[0] = letter;
         message[1] = '\0';
 
         base_packet packet;
         packet.seq = seq;
+        // printf("Last SEQ: %d Current SEQ: %d\n", last_SEQ, current_SEQ);
         seq++;
-        if(strcmp("QUIT", message) == 0){
-          send_without_data(seq, 4, sock, socket_addr);
-        }
+        
         memcpy(packet.data, message, DATA_SIZE);
 
+        //Waiting for slot in sliding buffer if its full
         sem_wait(&empty);
         pthread_mutex_lock(&winlock);
 
@@ -80,6 +85,7 @@ void* input(void* params){
         window[buffer_front] = packet;
         packets_in_window++;
 
+        //Checks the sliding window, if its full we dont send
         if(back_front_diff(windowBack, windowFront) < WIN_MAX_SIZE - 1 || windowFront == -1){
           windowFront = (windowFront + 1) % WINDOW_SIZE;
           crc_packet crcpacket;
@@ -94,9 +100,18 @@ void* input(void* params){
         }
         nr_of_packets++;
         letter++;
+        
         pthread_mutex_unlock(&winlock);
       }
+      loops++;
     }
+    
+    //Waiting for the last ACK to open the lock
+    pthread_mutex_lock(&acklock);
+    pthread_mutex_unlock(&acklock);
+    printf("Last ACK received\n");
+    return NULL;
+    
   }
   else{
     while(1){
@@ -142,6 +157,7 @@ void* input(void* params){
       pthread_mutex_unlock(&winlock);
     }
   }
+  return NULL;
 }
 
 void send_more(base_packet window[WINDOW_SIZE]){
@@ -180,6 +196,12 @@ void handle_response(base_packet packet){
     while(window[windowBack].seq < packet.seq && windowBack != windowFront + 1){
       // printf("WINSEQ: %d\n", window[i].seq);
       printf(">>> SEQ %d ACKED\n", window[windowBack].seq);
+      current_SEQ++;
+      if(current_SEQ == last_SEQ){
+        printf("Finished looking for ACKs \n");
+        pthread_mutex_unlock(&acklock);
+        return;
+      }
       window[windowBack].seq = -1;
       windowBack = (windowBack + 1) % WINDOW_SIZE;
       sem_post(&empty);
@@ -248,13 +270,15 @@ int sender_sliding_window(int sockfd, struct sockaddr_in sockaddr, int SEQ){
   socket_addr = sockaddr;
   pthread_t input_thread;
   pthread_mutex_init(&winlock, NULL);
+  pthread_mutex_init(&acklock, NULL);
+  pthread_mutex_lock(&acklock);
   sem_init(&empty, 0, WINDOW_SIZE - 1);
   char buffer[sizeof(crc_packet)];
   socklen_t len;
   int setup_SEQ = SEQ;
   SEQ++;
   printf("------ STARTING SEQ: %d ------\n", SEQ);
-
+  current_SEQ = SEQ;
   struct timeval tv;
   tv.tv_sec = TIMEOUT;
   tv.tv_usec = 0;
@@ -267,7 +291,7 @@ int sender_sliding_window(int sockfd, struct sockaddr_in sockaddr, int SEQ){
 
   // Set some timeout
   int read = 0;
-  while(true){
+  while(last_SEQ != current_SEQ){
     read = recvfrom(sockfd, buffer, sizeof(crc_packet), 
               MSG_WAITALL, (struct sockaddr*) &sockaddr, 
               &len);
@@ -302,16 +326,7 @@ int sender_sliding_window(int sockfd, struct sockaddr_in sockaddr, int SEQ){
           handle_response(packet);
         }
       }
-
-      // ACK/NACK received
-      
-
     }
-
   }
-
-
-
-
-  return 0;
+  return last_SEQ;
 }
