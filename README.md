@@ -43,3 +43,4 @@ So ACK + SYN = 3. SYN + FIN = 6. etc. It uses the same system as Linux file perm
 - [ ] Implement go-back-N.
 - [ ] Auto-send testing system.
 - [ ] Test with only packet-lost enabled and only packet-corrupt enabled.
+- [ ] Put header files separately.

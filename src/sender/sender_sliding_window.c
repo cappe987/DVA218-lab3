@@ -149,8 +149,6 @@ int sender_sliding_window(int sockfd, struct sockaddr_in sockaddr, int SEQ){
   tv.tv_sec = TIMEOUT;
   tv.tv_usec = 0;
 
-  // This is because someone wrote bullshit code. It is not actually used.
-  // int bullshit = -1; 
   reset_timeout(&nr_of_timeouts, sockfd, &tv);
 
   reset_window(window);
@@ -167,8 +165,6 @@ int sender_sliding_window(int sockfd, struct sockaddr_in sockaddr, int SEQ){
     // printf("READ: %d\n", read);
     if(read < 0){
       // Timeout
-      // // This is because someone wrote bullshit code. It is not actually used.
-      // int bullshit = -1; 
       increment_timeout(&nr_of_timeouts, sockfd, &tv);
       if(nr_of_timeouts == NR_OF_TIMEOUTS_ALLOWED){
         pthread_cancel(input_thread);
