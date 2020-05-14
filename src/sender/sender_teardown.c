@@ -38,7 +38,7 @@ int connection_teardown(int sockfd, struct sockaddr_in servaddr, int sequence){
       response = recvfrom(sockfd, (char *)buffer, DATA_SIZE, MSG_WAITALL, (struct sockaddr *) &servaddr, &len); 
       if (response < 0)
       {
-            increment_timeout(&nr_of_timeouts, &response, sockfd, &tv);
+            increment_timeout(&nr_of_timeouts, sockfd, &tv);
             //Check for lost connection
             if(nr_of_timeouts >= NR_OF_TIMEOUTS_ALLOWED)
             {
