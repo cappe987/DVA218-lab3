@@ -108,6 +108,10 @@ int start_sliding_window(int sockfd, struct sockaddr_in cliaddr, int SEQ){
 
   int windowBack  = 0;
   int windowFront = -1;
+  int nr_of_timeouts = 0;
+  struct timeval tv;
+  tv.tv_sec = TIMEOUT;
+  tv.tv_usec = 0;
   SEQ++;
   printf("------ STARTING SEQ: %d ------\n", SEQ);
 
@@ -129,6 +133,20 @@ int start_sliding_window(int sockfd, struct sockaddr_in cliaddr, int SEQ){
 
     crc_packet full_packet = *(crc_packet*) buffer;
     base_packet packet = extract_base_packet(full_packet);
+    
+    //No response
+    if(read < 0){
+      printf("Response < 0 \n");
+      increment_timeout(&nr_of_timeouts, sockfd, &tv);
+      printf("Timeout\n");
+        if(nr_of_timeouts == NR_OF_TIMEOUTS_ALLOWED){
+            return -1;
+        }
+        continue;
+    }
+    
+    reset_timeout(&nr_of_timeouts, sockfd, &tv);
+
     if( ! error_check(read, full_packet)){
       // Send NACK
       send_without_data(packet.seq, 8, sockfd, cliaddr);
@@ -145,10 +163,10 @@ int start_sliding_window(int sockfd, struct sockaddr_in cliaddr, int SEQ){
       // Should it finish waiting for all packets and then exit?
       return packet.seq;
     }
-    if(packet.flags > 0){
-      // What? Flags should only be able to be 4.
-      continue;
-    }
+    // if(packet.flags > 0){
+    //   // What? Flags should only be able to be 4.
+    //   continue;
+    // }
 
     // Do sequence number check
     int res = sequence_check(windowFront, windowBack, window, packet, SEQ);

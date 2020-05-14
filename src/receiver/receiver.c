@@ -45,17 +45,26 @@ int main() {
         exit(EXIT_FAILURE); 
     }
 
-    //Connection setup function
+    //Connection main loop
     while(sender_seq == -1){
         sender_seq = connection_setup(sockfd, cliaddr);
         if(sender_seq == -1){
-            printf("Connection reset\n");
+            printf("Connection to sender lost, reconnecting\n");
+            continue;
+        }
+        
+        sender_seq = start_sliding_window(sockfd, cliaddr, sender_seq);
+    
+        //Connection lost and a teardown won't be neccessary
+        if(sender_seq == -1){
+                printf("Connection to sender lost, restarting setup\n");
+            }
+        else{
+            printf("Connection teardown initiated\n");    
+            connection_teardown(sockfd, cliaddr, sender_seq);
+            return 0;
         }
     }
-
-    sender_seq = start_sliding_window(sockfd, cliaddr, sender_seq);
-    
-    connection_teardown(sockfd, cliaddr, sender_seq);
 
     return 0; 
 } 

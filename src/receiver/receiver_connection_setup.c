@@ -89,7 +89,7 @@ int connection_setup(int sockfd, struct sockaddr_in cliaddr){
             return -1;
         }
         send_without_data(packet.seq, 3, sockfd, cliaddr);
-        continue;
+        // continue;
     }
 
     if( ! error_check(response, full_packet)){
