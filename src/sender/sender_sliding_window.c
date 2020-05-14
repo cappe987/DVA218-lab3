@@ -41,6 +41,9 @@ void* input(void* params){
     base_packet packet;
     packet.seq = seq;
     seq++;
+    if(strcmp("QUIT", message) == 0){
+      packet.flags = 4;
+    }
     memcpy(packet.data, message, DATA_SIZE);
 
     pthread_mutex_lock(&winlock);

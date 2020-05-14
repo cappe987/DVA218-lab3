@@ -48,7 +48,7 @@ int connection_setup(int sockfd, struct sockaddr_in cliaddr){
         continue;
     }
 
-
+    
     if( ! error_check(response, full_packet)){
       //Failed error check, sending NACK
       printf("Error check 1\n");

@@ -103,7 +103,7 @@ int find_cumulative(int back, int front, int SEQ, base_packet window[WINDOW_SIZE
   return expects;
 }
 
-void start_sliding_window(int sockfd, struct sockaddr_in cliaddr, int SEQ){ 
+int start_sliding_window(int sockfd, struct sockaddr_in cliaddr, int SEQ){ 
   printf(">>> Sliding window started\n");
 
   int windowBack  = 0;
@@ -143,7 +143,7 @@ void start_sliding_window(int sockfd, struct sockaddr_in cliaddr, int SEQ){
     if(packet.flags == 4){
       // Fin
       // Should it finish waiting for all packets and then exit?
-      return;
+      return packet.seq;
     }
     if(packet.flags > 0){
       // What? Flags should only be able to be 4.

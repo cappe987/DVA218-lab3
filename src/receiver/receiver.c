@@ -13,6 +13,7 @@
 #include "../shared/constants.h"  
 #include "receiver_sliding_window.h"
 #include "receiver_connection_setup.h"
+#include "receiver_teardown.h"
 #include "../shared/utilities.h"
 
 // Driver code 
@@ -52,7 +53,9 @@ int main() {
         }
     }
 
-    start_sliding_window(sockfd, cliaddr, sender_seq);
+    sender_seq = start_sliding_window(sockfd, cliaddr, sender_seq);
     
+    connection_teardown(sockfd, cliaddr, sender_seq);
+
     return 0; 
 } 
