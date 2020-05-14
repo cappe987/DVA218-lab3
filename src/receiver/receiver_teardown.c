@@ -69,14 +69,19 @@ void connection_teardown(int sockfd, struct sockaddr_in cliaddr, int seqNr){
             // Send NACK
             send_without_data(received_packet.seq, 8, sockfd, cliaddr);
             printf("'Waiting for last ack' state failed CRC check\n");
+            response=-1;
             continue;
         }
-        else
+        if(received_packet.flags == 8)
         {
-            printf("Receiver: connection teardown complete.\n");
-            close(sockfd);
-            return;
+            printf("NACK received, Resend FIN + ACK\n"); 
+            send_without_data(sequanceNumber, 5, sockfd, cliaddr);
+            response=-1;        
+            continue;
         }
+        printf("Receiver: connection teardown complete.\n");
+        close(sockfd);
+        return;
+        
     }
 }
-

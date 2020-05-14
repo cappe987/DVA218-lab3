@@ -14,6 +14,7 @@
 #include "../shared/constants.h"
 #include "../shared/utilities.h"
 #include "sender_connection_setup.h"
+#include "sender_teardown.h"
 #include "sender_sliding_window.h"
 
 //ACK: 1 SYN: 2 FIN: 4 NACK: 8
@@ -23,7 +24,7 @@ int main() {
     srand(time(0));
     int sockfd; 
     struct sockaddr_in servaddr; //, cliaddr; 
-    int seq = -1;
+    //int seq = -1;
 
   
     // Creating socket file descriptor 
@@ -42,14 +43,11 @@ int main() {
 
     
 
-    while(seq == -1){
-      seq = connection_setup(sockfd, servaddr);
-      if(seq == -1){
-            printf("Connection reset\n");
-        }
-    }
+    //while(seq == -1){
+    //  seq = connection_setup(sockfd, servaddr);
+    //}
 
-    // connection_teardown(sockfd, servaddr, seq);
+    connection_teardown(sockfd, servaddr, 1);
 
         // Test loop for sending data packets.
 
@@ -74,7 +72,8 @@ int main() {
 
     // }
   
-    sender_sliding_window(sockfd, servaddr, seq);
+    //printf("------ STARTING SEQ: %d ------\n", seq);
+    //sender_sliding_window(sockfd, servaddr, seq);
     
     return 0; 
 } 
