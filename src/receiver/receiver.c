@@ -52,7 +52,7 @@ int main() {
         }
     }
 
-    start_sliding_window(sockfd, cliaddr, sender_seq);
+    receiver_sliding_window(sockfd, cliaddr, sender_seq);
     
     return 0; 
 } 
