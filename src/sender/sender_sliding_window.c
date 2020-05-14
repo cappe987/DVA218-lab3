@@ -12,8 +12,11 @@
 #include "../shared/utilities.h"
 #include "../shared/constants.h"
 #include "../shared/induce_errors.h"
+#include <semaphore.h>
 
 // #define WINDOW_SIZE 4
+
+//Must be below WINDOW_SIZE
 #define WIN_MAX_SIZE 16
 
 int sock;
@@ -27,6 +30,7 @@ int nr_of_timeouts = 0;
 int packets_in_window = 0;
 
 pthread_mutex_t winlock;
+sem_t empty;
 
 int back_front_diff(int back, int front){
   if(back <= front){
@@ -42,47 +46,101 @@ void* input(void* params){
   // printf("SENDER WINDOW SEQ: %d\n", seq);
   char message[DATA_SIZE];
   // int i = 4;
-  while(1){
-    // int MYSEQ;
-    // printf("Enter SEQ: ");
-    // scanf("%d", &MYSEQ);
-    // while(getchar() != '\n');
-    printf("Enter message for SEQ %d: ", seq);
-    fgets(message, DATA_SIZE, stdin);
-    message[strlen(message)-1] = '\0';
-    base_packet packet;
-    packet.seq = seq;
-    seq++;
-    if(strcmp("QUIT", message) == 0){
-      packet.flags = 4;
+
+  if(APPLICATION_SIMULATOR){
+    int packets_to_send;
+    int nr_of_packets;
+    char letter;
+    
+    while(1){
+      
+      nr_of_packets = 0;
+      packets_to_send = rand() % (WINDOW_SIZE - 1);
+      letter = '0';
+      printf("Number of packets to send: %d\n", packets_to_send);
+
+      while(nr_of_packets !=  packets_to_send){
+
+        
+        message[0] = letter;
+        message[1] = '\0';
+
+        base_packet packet;
+        packet.seq = seq;
+        seq++;
+        if(strcmp("QUIT", message) == 0){
+          send_without_data(seq, 4, sock, socket_addr);
+        }
+        memcpy(packet.data, message, DATA_SIZE);
+
+        sem_wait(&empty);
+        pthread_mutex_lock(&winlock);
+
+        buffer_front = (buffer_front + 1) % WINDOW_SIZE;
+        window[buffer_front] = packet;
+        packets_in_window++;
+
+        if(back_front_diff(windowBack, windowFront) < WIN_MAX_SIZE - 1 || windowFront == -1){
+          windowFront = (windowFront + 1) % WINDOW_SIZE;
+          crc_packet crcpacket;
+          crcpacket = create_crc((char*)&packet);
+          // crcpacket.crc = 50; // Induce error for testing
+          // crcpacket.data[0] = 'X';
+          send_with_error(sock, (const char*)&crcpacket, sizeof(crc_packet), MSG_CONFIRM, (const struct sockaddr*) &socket_addr, sizeof(socket_addr));
+
+        }
+        else{
+          printf("Didn't send %d\n", packet.seq);
+        }
+        nr_of_packets++;
+        letter++;
+        pthread_mutex_unlock(&winlock);
+      }
     }
-    memcpy(packet.data, message, DATA_SIZE);
+  }
+  else{
+    while(1){
+      // int MYSEQ;
+      // printf("Enter SEQ: ");
+      // scanf("%d", &MYSEQ);
+      // while(getchar() != '\n');
+      printf("Enter message for SEQ %d: ", seq);
+      fgets(message, DATA_SIZE, stdin);
+      message[strlen(message)-1] = '\0';
+      base_packet packet;
+      packet.seq = seq;
+      seq++;
+      if(strcmp("QUIT", message) == 0){
+        packet.flags = 4;
+      }
+      memcpy(packet.data, message, DATA_SIZE);
 
-    pthread_mutex_lock(&winlock);
+      pthread_mutex_lock(&winlock);
 
-    if(packets_in_window == WINDOW_SIZE - 1){
-      printf("Window full\n");
-      seq--;
+      if(packets_in_window == WINDOW_SIZE - 1){
+        printf("Window full\n");
+        seq--;
+        pthread_mutex_unlock(&winlock);
+        continue;
+      }
+      buffer_front = (buffer_front + 1) % WINDOW_SIZE;
+      window[buffer_front] = packet;
+      packets_in_window++;
+
+      if(back_front_diff(windowBack, windowFront) < WIN_MAX_SIZE - 1 || windowFront == -1){
+        windowFront = (windowFront + 1) % WINDOW_SIZE;
+        crc_packet crcpacket;
+        crcpacket = create_crc((char*)&packet);
+        // crcpacket.crc = 50; // Induce error for testing
+        // crcpacket.data[0] = 'X';
+        send_with_error(sock, (const char*)&crcpacket, sizeof(crc_packet), MSG_CONFIRM, (const struct sockaddr*) &socket_addr, sizeof(socket_addr));
+
+      }
+      else{
+        printf("Didn't send %d\n", packet.seq);
+      }
       pthread_mutex_unlock(&winlock);
-      continue;
     }
-    buffer_front = (buffer_front + 1) % WINDOW_SIZE;
-    window[buffer_front] = packet;
-    packets_in_window++;
-
-    if(back_front_diff(windowBack, windowFront) < WIN_MAX_SIZE - 1 || windowFront == -1){
-      windowFront = (windowFront + 1) % WINDOW_SIZE;
-      crc_packet crcpacket;
-      crcpacket = create_crc((char*)&packet);
-      // crcpacket.crc = 50; // Induce error for testing
-      // crcpacket.data[0] = 'X';
-      send_with_error(sock, (const char*)&crcpacket, sizeof(crc_packet), MSG_CONFIRM, (const struct sockaddr*) &socket_addr, sizeof(socket_addr));
-
-    }
-    else{
-      printf("Didn't send %d\n", packet.seq);
-    }
-    pthread_mutex_unlock(&winlock);
   }
 }
 
@@ -124,7 +182,7 @@ void handle_response(base_packet packet){
       printf(">>> SEQ %d ACKED\n", window[windowBack].seq);
       window[windowBack].seq = -1;
       windowBack = (windowBack + 1) % WINDOW_SIZE;
-      packets_in_window--;
+      sem_post(&empty);
     }
 
     // printf("Back: %d, Front: %d, BufferFront: %d\n", windowBack, windowFront, buffer_front);
@@ -190,6 +248,7 @@ int sender_sliding_window(int sockfd, struct sockaddr_in sockaddr, int SEQ){
   socket_addr = sockaddr;
   pthread_t input_thread;
   pthread_mutex_init(&winlock, NULL);
+  sem_init(&empty, 0, WINDOW_SIZE - 1);
   char buffer[sizeof(crc_packet)];
   socklen_t len;
   int setup_SEQ = SEQ;

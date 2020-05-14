@@ -6,5 +6,5 @@
 #define TIMEOUT 2
 #define NR_OF_TIMEOUTS_ALLOWED 5
 #define WINDOW_SIZE 64
-
+#define APPLICATION_SIMULATOR 1
 #endif
