@@ -28,7 +28,6 @@ int connection_setup(int sockfd, struct sockaddr_in servaddr){
     perror("Error");
   }
 
-  srand(time(0));
   seq = rand() % 100;
 
   // Setting sequence number

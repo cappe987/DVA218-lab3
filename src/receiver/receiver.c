@@ -7,6 +7,7 @@
 #include <arpa/inet.h> 
 #include <netinet/in.h>
 #include <sys/time.h> 
+#include <time.h>
 #include "../shared/base_packet.h"
 #include "../shared/induce_errors.h"
 #include "../shared/constants.h"  
@@ -16,6 +17,7 @@
 
 // Driver code 
 int main() { 
+    srand(time(0));
     int sockfd; 
     struct sockaddr_in servaddr, cliaddr; 
     int sender_seq = -1;
