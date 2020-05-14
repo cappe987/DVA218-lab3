@@ -20,76 +20,98 @@ int connection_setup(int sockfd, struct sockaddr_in cliaddr){
   tv.tv_sec = TIMEOUT;
   tv.tv_usec = 0;
 
+  //Sets timeout
   if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv))< 0)
   {
     perror("Error");
   }
-  len = sizeof(cliaddr);  //len is value/result
+
+  len = sizeof(cliaddr);
   packet.seq = 1;
   packet.flags = 3;
   int response = -1, nr_of_timeouts = 0, sender_seq = -1;
-
   
+  //Listen state loop
   while(response < 0){
     response = recvfrom(sockfd, (char *)buffer, sizeof(crc_packet), MSG_WAITALL, (struct sockaddr *) &cliaddr, &len); 
     full_packet = *(crc_packet*) buffer;
     packet_received = extract_base_packet(full_packet);
 
-    printf("Sender: %d\n", packet_received.flags);
-
-    if( ! error_check(response, full_packet)){
-      // Send NACK
-      printf(">>> Failed CRC check\n");
-      send_without_data(packet.seq, 8, sockfd, cliaddr);
-      continue;
-    }
-
-    if(packet_received.flags != 2){
-        printf("Received faulty SYN / NACK or timeout\n");
-        send_without_data(packet.seq, 8, sockfd, cliaddr); 
-
-        increment_timeout(&nr_of_timeouts, &response, sockfd, &tv);
+    //No response
+    if(response < 0){
+      printf("Response < 0 \n");
+      increment_timeout(&nr_of_timeouts, sockfd, &tv);
+      printf("Timeout\n");
         if(nr_of_timeouts == NR_OF_TIMEOUTS_ALLOWED){
             return -1;
         }
+        continue;
     }
+
+
+    if( ! error_check(response, full_packet)){
+      //Failed error check, sending NACK
+      printf("Error check 1\n");
+      send_without_data(packet.seq, 8, sockfd, cliaddr);
+      response = -1;
+      continue;
+    }
+
+    printf("Sender: %d\n", packet_received.flags);
+
+    //Packet does not have the expected flag
+    if(packet_received.flags != 2){
+        response = -1;
+        printf("Received faulty SYN / NACK\n");
+        send_without_data(packet.seq, 8, sockfd, cliaddr);   
+    }
+    //Stores the sequence number for sliding window
     sender_seq = packet_received.seq;
+    packet.seq = packet_received.seq;
   }
   
-  reset_variables(&nr_of_timeouts, &response, sockfd, &tv);
-
-  sender_seq++;
-  packet.seq = sender_seq; 
+  //Resets timeouts and loops and send a SYN ACK
+  reset_variables(&nr_of_timeouts, sockfd, &tv);
+  response = -1;
   send_without_data(packet.seq, 3, sockfd, cliaddr);
 
+  //SYN-Received state loop
   while(response < 0){
     response = recvfrom(sockfd, (char *)buffer, sizeof(crc_packet), MSG_WAITALL, (struct sockaddr *) &cliaddr, &len); 
     full_packet = *(crc_packet*) buffer;
     packet_received = extract_base_packet(full_packet);
 
-    printf("Sender: %d\n", packet_received.flags);
-
-    if( ! error_check(response, full_packet)){
-      // Send NACK
-      printf(">>> Failed CRC check\n");
-      send_without_data(packet.seq, 8, sockfd, cliaddr);
-      continue;
-    }
-
-    if(packet_received.flags != 2){
-        printf("Received NACK or timeout\n");
-        send_without_data(packet.seq, 3, sockfd, cliaddr);
-        
-        increment_timeout(&nr_of_timeouts, &response, sockfd, &tv);
+      //No response
+     if(response < 0){
+      increment_timeout(&nr_of_timeouts, sockfd, &tv);
+        printf("Timeout\n");
         if(nr_of_timeouts == NR_OF_TIMEOUTS_ALLOWED){
             return -1;
         }
+        send_without_data(packet.seq, 3, sockfd, cliaddr);
+        continue;
+    }
+
+    if( ! error_check(response, full_packet)){
+      //Failed error check, sending NACK
+      printf("Error check 2\n");
+      send_without_data(packet.seq, 8, sockfd, cliaddr);
+      response = -1;
+      continue;
+    }
+
+    printf("Sender: %d\n", packet_received.flags);
+
+    //Packet does not have the expected flag
+    if(packet_received.flags != 1){
+        response = -1;
+        printf("Received NACK\n");
+        send_without_data(packet.seq, 3, sockfd, cliaddr);
     } 
-    sender_seq = packet_received.seq;
   }
 
-  reset_variables(&nr_of_timeouts, &response, sockfd, &tv);
-
+  //Resets and sets timeouts 
+  reset_variables(&nr_of_timeouts, sockfd, &tv);
   tv.tv_sec = 0;
   if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv))< 0)
   {

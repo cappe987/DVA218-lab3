@@ -19,8 +19,9 @@ void connection_teardown(int sockfd, struct sockaddr_in cliaddr, int seqNr){
     socklen_t len = sizeof(cliaddr);
 
     //Reset socket timeout timer
-    struct timeval tv = { TIMEOUT, 0 };
-    //reset_variables(&timeouts, &response, sockfd, &tv);
+    struct timeval tv = { TIMEOUT/2, 0 };
+    increment_timeout(&timeouts, sockfd, &tv);
+    response = -1;
     //Send FIN+ACK
 
     //Testing snippet
@@ -45,7 +46,8 @@ void connection_teardown(int sockfd, struct sockaddr_in cliaddr, int seqNr){
         if (response < 0)
         {
             
-            increment_timeout(&timeouts, &response, sockfd, &tv);
+            increment_timeout(&timeouts, sockfd, &tv);
+            response = -1;
             //Check for lost connection
             if(timeouts >= NR_OF_TIMEOUTS_ALLOWED)
             {

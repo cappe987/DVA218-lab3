@@ -108,6 +108,8 @@ void start_sliding_window(int sockfd, struct sockaddr_in cliaddr, int SEQ){
 
   int windowBack  = 0;
   int windowFront = -1;
+  SEQ++;
+  printf("------ STARTING SEQ: %d ------\n", SEQ);
 
   base_packet window[WINDOW_SIZE];
   for(int i = 0; i < WINDOW_SIZE; i++){
@@ -145,6 +147,7 @@ void start_sliding_window(int sockfd, struct sockaddr_in cliaddr, int SEQ){
     }
     if(packet.flags > 0){
       // What? Flags should only be able to be 4.
+      continue;
     }
 
     // Do sequence number check
