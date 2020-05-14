@@ -12,19 +12,33 @@
 
 void connection_teardown(int sockfd, struct sockaddr_in cliaddr, int seqNr){
     
-    printf("Receiver connection teardown initialized.\n");
+    printf("Receiver: connection teardown initialized.\n");
     int response = -1, sequanceNumber = seqNr+1,timeouts = -1;
     base_packet received_packet;
     char buffer[sizeof(crc_packet)];  
     socklen_t len = sizeof(cliaddr);
 
     //Reset socket timeout timer
-    struct timeval tv = { TIMEOUT/2, 0 };
-    increment_timeout(&timeouts, &response, sockfd, &tv);
+    struct timeval tv = { TIMEOUT, 0 };
+    //reset_variables(&timeouts, &response, sockfd, &tv);
     //Send FIN+ACK
+
+    //Testing snippet
+    //---------------------------------
+    while(response < 0)
+    {
+        response = recvfrom(sockfd, (char *)buffer, sizeof(crc_packet), MSG_WAITALL, (struct sockaddr *) &cliaddr, &len);
+    }
+    printf("FIN got\n");
+    response=-1;
+
+
+    //---------------------------------
+
+
     send_without_data(sequanceNumber, 5, sockfd, cliaddr);
     printf("FIN + ACK sent.\n");
-    
+ 
     while(response < 0){
         response = recvfrom(sockfd, (char *)buffer, sizeof(crc_packet), MSG_WAITALL, (struct sockaddr *) &cliaddr, &len);
         //Check for timeout
@@ -44,6 +58,7 @@ void connection_teardown(int sockfd, struct sockaddr_in cliaddr, int seqNr){
             printf("FIN + ACK resent %d times.\n", timeouts);   
             continue;
         }
+        printf("Hello!\n");
         crc_packet full_packet = *(crc_packet*) buffer;
         received_packet = extract_base_packet(full_packet);
         printf("Got packet!\n");
@@ -56,7 +71,7 @@ void connection_teardown(int sockfd, struct sockaddr_in cliaddr, int seqNr){
         }
         else
         {
-            printf("Last ACK received. Shuting down\n");
+            printf("Receiver: connection teardown complete.\n");
             close(sockfd);
             return;
         }
