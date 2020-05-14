@@ -55,9 +55,20 @@ int main() {
         exit(EXIT_FAILURE); 
     }
 
-    connection_teardown(sockfd,cliaddr,0);
+    while(sender_seq == -1){
+        sender_seq = connection_setup(sockfd,cliaddr);
 
-    receiver_sliding_window(sockfd, cliaddr, sender_seq);
+        sender_seq = receiver_sliding_window(sockfd, cliaddr, sender_seq);
+
+        if(sender_seq == -1){
+            printf("Connection to receiver lost, restarting setup\n");
+        }
+        else{
+            printf("Connection teardown initiated\n"); 
+            connection_teardown(sockfd, servaddr, sender_seq);
+            return 0;
+        }
+    }
     //while(sender_seq == -1){
     //    sender_seq = connection_setup(sockfd, cliaddr);
     //}
@@ -65,9 +76,5 @@ int main() {
 
     //start_sliding_window(sockfd, cliaddr, sender_seq);
    //void connection_teardown(int sockfd, struct sockaddr_in cliaddr, int seqNr);
-
-    connection_teardown(sockfd,cliaddr,1);
-
-    
     return 0; 
 } 

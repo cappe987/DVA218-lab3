@@ -40,8 +40,8 @@ So ACK + SYN = 3. SYN + FIN = 6. etc. It uses the same system as Linux file perm
 - [X] Limit Sender max window size to 16.
 - [X] Global timeout for Receiver Sliding Window.
 - [X] Implement go-back-N.
-- [ ] Auto-send testing system.
+- [X] Auto-send testing system.
 - [ ] Test with only packet-lost enabled and only packet-corrupt enabled.
 - [ ] Put header files separately.
-- [ ] Sender Window: send all data before sending quit and going to teardown.
-- [ ] Use semaphore for packets_in_window in Sender Window.
+- [X] Sender Window: send all data before sending quit and going to teardown.
+- [X] Use semaphore for packets_in_window in Sender Window.
