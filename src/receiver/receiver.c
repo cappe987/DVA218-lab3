@@ -70,6 +70,9 @@ int main() {
 
     //start_sliding_window(sockfd, cliaddr, sender_seq);
    //void connection_teardown(int sockfd, struct sockaddr_in cliaddr, int seqNr);
+
+    connection_teardown(sockfd,cliaddr,1);
+
     
     return 0; 
 } 
