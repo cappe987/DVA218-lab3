@@ -55,6 +55,7 @@ int connection_setup(int sockfd, struct sockaddr_in cliaddr){
     printf("Sender: %d\n", packet_received.flags);
 
     if(packet_received.flags != 2){
+        response = -1;
         printf("Received faulty SYN / NACK\n");
         send_without_data(packet.seq, 8, sockfd, cliaddr);   
     }
@@ -92,6 +93,7 @@ int connection_setup(int sockfd, struct sockaddr_in cliaddr){
     printf("Sender: %d\n", packet_received.flags);
 
     if(packet_received.flags != 1){
+        response = -1;
         printf("Received NACK\n");
         send_without_data(packet.seq, 3, sockfd, cliaddr);
     } 

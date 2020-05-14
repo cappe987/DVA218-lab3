@@ -45,6 +45,9 @@ int main() {
     //Connection setup function
     while(sender_seq == -1){
         sender_seq = connection_setup(sockfd, cliaddr);
+        if(sender_seq == -1){
+            printf("Connection reset\n");
+        }
     }
 
     start_sliding_window(sockfd, cliaddr, sender_seq);
