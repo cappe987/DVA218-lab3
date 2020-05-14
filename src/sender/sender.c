@@ -44,6 +44,9 @@ int main() {
 
     while(seq == -1){
       seq = connection_setup(sockfd, servaddr);
+      if(seq == -1){
+            printf("Connection reset\n");
+        }
     }
 
     // connection_teardown(sockfd, servaddr, seq);

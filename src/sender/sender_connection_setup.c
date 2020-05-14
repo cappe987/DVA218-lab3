@@ -28,7 +28,6 @@ int connection_setup(int sockfd, struct sockaddr_in servaddr){
     perror("Error");
   }
 
-  srand(time(0));
   seq = rand() % 100;
 
   // Setting sequence number
@@ -62,6 +61,7 @@ int connection_setup(int sockfd, struct sockaddr_in servaddr){
     }
 
     if(packet_received.flags != 3){
+      response = -1;
       printf("Received NACK or timeout\n");
       send_without_data(packet.seq, 2, sockfd, servaddr);
     }
