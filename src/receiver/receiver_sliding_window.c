@@ -145,6 +145,7 @@ void start_sliding_window(int sockfd, struct sockaddr_in cliaddr, int SEQ){
     }
     if(packet.flags > 0){
       // What? Flags should only be able to be 4.
+      continue;
     }
 
     // Do sequence number check
