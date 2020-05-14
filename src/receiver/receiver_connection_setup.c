@@ -59,6 +59,7 @@ int connection_setup(int sockfd, struct sockaddr_in cliaddr){
         send_without_data(packet.seq, 8, sockfd, cliaddr);   
     }
     sender_seq = packet_received.seq;
+    packet.seq = packet_received.seq;
   }
   
   reset_variables(&nr_of_timeouts, sockfd, &tv);

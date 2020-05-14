@@ -134,12 +134,16 @@ void resend_all(base_packet window[WINDOW_SIZE]){
 
 
 int sender_sliding_window(int sockfd, struct sockaddr_in sockaddr, int SEQ){
+  printf(">>> Sliding window started\n");
   sock = sockfd;
   socket_addr = sockaddr;
   pthread_t input_thread;
   pthread_mutex_init(&winlock, NULL);
   char buffer[sizeof(crc_packet)];
   socklen_t len;
+  int setup_SEQ = SEQ;
+  SEQ++;
+  printf("------ STARTING SEQ: %d ------\n", SEQ);
 
   struct timeval tv;
   tv.tv_sec = TIMEOUT;
@@ -183,7 +187,14 @@ int sender_sliding_window(int sockfd, struct sockaddr_in sockaddr, int SEQ){
         // reset_timeout(&nr_of_timeouts, sockfd, &tv);
         // CRC passed
         // int result = handle_response(extract_base_packet(full_packet));
-        handle_response(extract_base_packet(full_packet));
+        // handle_response(extract_base_packet(full_packet));
+        base_packet packet = extract_base_packet(full_packet);
+        if(packet.seq == setup_SEQ && packet.flags == 3){
+          send_without_data(packet.seq, 1, sockfd, sockaddr);
+        }
+        else{
+          handle_response(packet);
+        }
       }
 
       // ACK/NACK received

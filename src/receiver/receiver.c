@@ -46,7 +46,6 @@ int main() {
     while(sender_seq == -1){
         sender_seq = connection_setup(sockfd, cliaddr);
     }
-    printf("------ STARTING SEQ: %d ------\n", sender_seq);
 
     start_sliding_window(sockfd, cliaddr, sender_seq);
     

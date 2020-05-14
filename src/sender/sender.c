@@ -71,7 +71,6 @@ int main() {
 
     // }
   
-    printf("------ STARTING SEQ: %d ------\n", seq);
     sender_sliding_window(sockfd, servaddr, seq);
     
     return 0; 
