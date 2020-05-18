@@ -22,14 +22,14 @@
 #include <netinet/in.h>
 #include <sys/time.h> 
 #include <time.h>
-#include "../shared/base_packet.h"
-#include "../shared/induce_errors.h"
-#include "../shared/constants.h"  
-#include "receiver_sliding_window.h"
-#include "receiver_connection_setup.h"
-#include "receiver_teardown.h"
-#include "../shared/utilities.h"
-#include "receiver_teardown.h"
+#include "../../include/shared/base_packet.h"
+#include "../../include/shared/induce_errors.h"
+#include "../../include/shared/constants.h"  
+#include "../../include/receiver/receiver_sliding_window.h"
+#include "../../include/receiver/receiver_connection_setup.h"
+#include "../../include/receiver/receiver_teardown.h"
+#include "../../include/shared/utilities.h"
+#include "../../include/receiver/receiver_teardown.h"
 
 // Driver code 
 int main() { 

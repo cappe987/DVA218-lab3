@@ -19,11 +19,11 @@
 #include <unistd.h>
 #include <time.h>
 #include <netinet/in.h> 
-#include "utilities.h"
-#include "constants.h"
-#include "base_packet.h"
-#include "induce_errors.h"
-#include "crc32.h"
+#include "../../include/shared/utilities.h"
+#include "../../include/shared/constants.h"
+#include "../../include/shared/base_packet.h"
+#include "../../include/shared/induce_errors.h"
+#include "../../include/shared/crc32.h"
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
@@ -87,6 +87,7 @@ ssize_t send_without_data(int seq, int flag, int sockfd, struct sockaddr_in sock
   packet.data[0] = '\0';
   packet.seq = seq;
   packet.flags = flag;
+  time_stamp();
   printf("Sent ");
   if(flag % 2  == 1){printf("ACK "); flag = flag - 1;}
   if(flag % 4  == 2){printf("SYN "); flag = flag - 2;}
@@ -103,7 +104,7 @@ ssize_t send_without_data(int seq, int flag, int sockfd, struct sockaddr_in sock
 
 int error_check(int read, crc_packet packet){
   if(read == 0){ // Socket has shut down, not sure if needed
-    printf(">>> Socket closed for some reason\n");
+    printf(">>> Socket closed unexpectedly\n");
     exit(1);
     // return false;
   }

@@ -17,10 +17,10 @@
 #include <stdio.h>
 #include <unistd.h> 
 
-#include "../shared/utilities.h"
-#include "../shared/base_packet.h"
-#include "../shared/constants.h"
-#include "../shared/crc32.h" 
+#include "../../include/shared/utilities.h"
+#include "../../include/shared/base_packet.h"
+#include "../../include/shared/constants.h"
+#include "../../include/shared/crc32.h" 
 
 
 void connection_teardown(int sockfd, struct sockaddr_in cliaddr, int seqNr){
@@ -79,7 +79,7 @@ void connection_teardown(int sockfd, struct sockaddr_in cliaddr, int seqNr){
         }
 
         if(received_packet.seq != sequanceNumber +1) {
-            if (received_packet.seq = sequanceNumber -1 && received_packet.flags == 4)
+            if (received_packet.seq == sequanceNumber -1 && received_packet.flags == 4)
             {
                 time_stamp();
                 printf("Received FIN, resending FIN ACK\n");

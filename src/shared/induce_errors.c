@@ -18,16 +18,15 @@
 #include <time.h> 
 #include <sys/socket.h>
 #include <arpa/inet.h> 
-#include "induce_errors.h"
-#include "utilities.h"
-#include "crc32.h"
+#include "../../include/shared/induce_errors.h"
+#include "../../include/shared/utilities.h"
+#include "../../include/shared/crc32.h"
 
 ssize_t send_with_error(int sockfd, const void* buf, size_t size, int flags, const struct sockaddr* addr, socklen_t addr_len){
 
   if(ERRORS_ENABLED){ // ERRORS_ENABLED can be found in induce_errors.h
     // Do printf whenever an error occurs.
 
-    srand(time(0));
     int error = rand() % 10;
 
     switch (error)
