@@ -162,6 +162,9 @@ void* input(void* params){
 }
 
 void send_more(base_packet window[WINDOW_SIZE]){
+  if(back_front_diff(windowBack, windowFront) >= WIN_MAX_SIZE - 2 && windowFront != windowBack - 1){
+    return;
+  }
   while(windowFront != buffer_front){
     windowFront = (windowFront + 1) % WINDOW_SIZE;
     crc_packet crcpacket;
@@ -171,7 +174,7 @@ void send_more(base_packet window[WINDOW_SIZE]){
     time_stamp();
     printf("Sending packet %d\n", window[windowFront].seq);
     send_with_error(sock, (const char*)&crcpacket, sizeof(crc_packet), MSG_CONFIRM, (const struct sockaddr*) &socket_addr, sizeof(socket_addr));
-    if( ! (back_front_diff(windowBack, windowFront) < WIN_MAX_SIZE - 1)){
+    if(back_front_diff(windowBack, windowFront) >= WIN_MAX_SIZE - 2){
       return;
     }
 
@@ -196,6 +199,7 @@ void handle_response(base_packet packet){
     // int i = windowBack;
     // while(window[i].seq != -1 && window[i].seq <= packet.seq){
     while(window[windowBack].seq < packet.seq && windowBack != windowFront + 1){
+      // printf("Back: %d | Front: %d | packet.seq: %d\n", windowBack, windowFront, packet.seq);
       // printf("WINSEQ: %d\n", window[i].seq);
       time_stamp();
       printf("SEQ %d ACKED\n", window[windowBack].seq);
@@ -260,6 +264,7 @@ void resend_all(base_packet window[WINDOW_SIZE]){
   crc_packet full_packet;
   // printf(">>> Resending ALL\n");
   for(int i = windowBack; i != (windowFront + 1) % WINDOW_SIZE; i = (i + 1) % WINDOW_SIZE){
+    // printf("Back: %d | Front: %d\n", windowBack, windowFront);
     if(window[i].seq != -1){
       time_stamp();
       printf("Resending seq %d due to timeout\n", window[i].seq);
