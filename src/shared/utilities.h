@@ -15,4 +15,6 @@ ssize_t send_without_data(int seq, int flag, int sockfd, struct sockaddr_in sock
 
 int error_check(int read, crc_packet packet);
 
+void time_stamp();
+
 #endif

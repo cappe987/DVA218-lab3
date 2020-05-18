@@ -26,10 +26,11 @@ int main() {
     struct sockaddr_in servaddr; //, cliaddr; 
     int seq = -1;
 
-  
+    
     // Creating socket file descriptor 
-    if ( (sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ) { 
-        perror("socket creation failed"); 
+    if ( (sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ) {
+        time_stamp(); 
+        perror("socket creation failed\n"); 
         exit(EXIT_FAILURE); 
     } 
 
@@ -40,49 +41,28 @@ int main() {
     servaddr.sin_family = AF_INET; 
     servaddr.sin_port = htons(PORT); 
     servaddr.sin_addr.s_addr = INADDR_ANY; 
-
     
 
     while(seq == -1){
       seq = connection_setup(sockfd, servaddr);
       if(seq == -1){
-            printf("Connection reset\n");
+        time_stamp();
+        printf("Connection reset\n");
         }
 
         seq = sender_sliding_window(sockfd, servaddr, seq);
 
         if(seq == -1){
-            printf("Connection to receiver lost, restarting setup\n");
+            time_stamp();
+           printf("Connection to receiver lost, restarting setup\n");
         }
         else{
+            time_stamp();
             printf("Connection teardown initiated\n"); 
             connection_teardown(sockfd, servaddr, seq);
             return 0;
         }
-    }
-        // Test loop for sending data packets.
-
-    // char message[64];
-    // // int i = 4;
-    // while(1){
-    //   int seq;
-    //   printf("Enter SEQ: ");
-    //   scanf("%d", &seq);
-    //   while(getchar() != '\n');
-    //   printf("Enter message: ");
-    //   fgets(message, 64, stdin);
-    //   message[strlen(message)-1] = '\0';
-    //   base_packet packet;
-    //   packet.seq = seq;
-    //   memcpy(packet.data, message, 64);
-    //   crc_packet crcpacket;
-    //   crcpacket = create_crc((char*)&packet);
-    //   send_with_error(sockfd, (const char*)&crcpacket, sizeof(crc_packet), MSG_CONFIRM, (const struct sockaddr*) &servaddr, sizeof(servaddr));
-
-    //   // i = i + 8;
-
-    // }
-  
+    } 
     
     return 0; 
 } 

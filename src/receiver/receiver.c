@@ -17,15 +17,6 @@
 #include "../shared/utilities.h"
 #include "receiver_teardown.h"
 
-
-//ACK: 1 SYN: 2 FIN: 4 NACK: 8
-
-// int send_nack(base_packet packet, int sockfd, size_t size, int flags, const struct sockaddr* addr, socklen_t addr_len){
-//     char* buf = (char*)&packet; 
-//     return send_with_error(sockfd, buf, size, flags, addr, addr_len); 
-// }
-
-
 // Driver code 
 int main() { 
     srand(time(0));
@@ -34,8 +25,9 @@ int main() {
     int sender_seq = -1;
       
     // Creating socket file descriptor 
-    if ( (sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ) { 
-        perror("socket creation failed"); 
+    if ( (sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ) {
+        time_stamp(); 
+        perror("socket creation failed\n"); 
         exit(EXIT_FAILURE); 
     } 
       
@@ -51,7 +43,8 @@ int main() {
     if ( bind(sockfd, (const struct sockaddr *)&servaddr,  
             sizeof(servaddr)) < 0 ) 
     { 
-        perror("bind failed"); 
+        time_stamp();
+        perror("bind failed\n"); 
         exit(EXIT_FAILURE); 
     }
 
@@ -61,20 +54,16 @@ int main() {
         sender_seq = receiver_sliding_window(sockfd, cliaddr, sender_seq);
 
         if(sender_seq == -1){
+            time_stamp();
             printf("Connection to receiver lost, restarting setup\n");
         }
         else{
+            time_stamp();
             printf("Connection teardown initiated\n"); 
             connection_teardown(sockfd, servaddr, sender_seq);
             return 0;
         }
     }
-    //while(sender_seq == -1){
-    //    sender_seq = connection_setup(sockfd, cliaddr);
-    //}
-    //printf("SEQ NUM: %d\n", sender_seq);
 
-    //start_sliding_window(sockfd, cliaddr, sender_seq);
-   //void connection_teardown(int sockfd, struct sockaddr_in cliaddr, int seqNr);
     return 0; 
 } 

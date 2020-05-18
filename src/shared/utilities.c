@@ -3,6 +3,8 @@
 #include <string.h> 
 #include <sys/socket.h> 
 #include <sys/time.h> 
+#include <unistd.h>
+#include <time.h>
 #include <netinet/in.h> 
 #include "utilities.h"
 #include "constants.h"
@@ -13,6 +15,26 @@
 #include <stdlib.h>
 #include <string.h>
 
+void time_stamp(){
+  
+  time_t rawtime = time(NULL);
+    
+  if (rawtime == -1) {
+    printf("Get raw time failed\n");
+    return;
+  }
+    
+  struct tm *time = localtime(&rawtime);
+    
+  if (time == NULL) {
+    printf("Get local time failed\n");
+    return;
+  }
+  
+  printf("%02d:%02d:%02d ", time->tm_hour, time->tm_min, time->tm_sec);
+  
+  return;
+}
 
 void reset_variables(int *timeout, int sockfd, struct timeval *tv){
     *timeout = 0;

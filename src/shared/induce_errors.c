@@ -1,7 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h> 
+#include <sys/socket.h>
+#include <arpa/inet.h> 
 #include "induce_errors.h"
+#include "utilities.h"
 #include "crc32.h"
 
 ssize_t send_with_error(int sockfd, const void* buf, size_t size, int flags, const struct sockaddr* addr, socklen_t addr_len){
@@ -10,18 +13,19 @@ ssize_t send_with_error(int sockfd, const void* buf, size_t size, int flags, con
     // Do printf whenever an error occurs.
 
     srand(time(0));
-    int error = rand() % 7;
-    printf("error: %d\n", error);
+    int error = rand() % 10;
 
     switch (error)
     {
     case 3: case 4:
       //Packet lost
+      time_stamp();
       printf("Packet was lost\n");
       return sizeof(crc_packet);
       break;
     case 5: case 6:
       //Corrupt packet
+      time_stamp();
       printf("Packet was corrupt\n");
       char* corrupt_packet = (char*)buf;
       corrupt_packet[10] = 't';

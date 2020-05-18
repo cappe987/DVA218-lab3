@@ -1,4 +1,7 @@
 # TCP-like protocol on top of UDP
+```
+This program is designed and written by Alexander Andersson, Casper Andersson and Nick Grannas.
+```
 
 ## Building and running
 ### To build sender and receiver:
@@ -36,7 +39,7 @@ So ACK + SYN = 3. SYN + FIN = 6. etc. It uses the same system as Linux file perm
 ## To-do
 - [X] Make sliding window receiver handle FIN's
 - [X] Implement a system to quit.
-- [ ] Better print messages. Timestamps.
+- [X] Better print messages. Timestamps.
 - [X] Limit Sender max window size to 16.
 - [X] Global timeout for Receiver Sliding Window.
 - [X] Implement go-back-N.
