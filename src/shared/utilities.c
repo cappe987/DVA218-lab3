@@ -1,3 +1,16 @@
+// ###########################################################
+// #         This program is written and designed by         #
+// #   Alexander Andersson, Casper Andersson, Nick Grannas   #
+// #           During the period 6/5/20 - 26/5/20            #
+// #          For course DVA 218 Datakommunikation           #
+// ###########################################################
+// #                      Description                        #
+// # File name: Utilities                                    #
+// # Function: Here are the functions that are used globaly  #
+// # in the program.                                         #
+// ###########################################################
+
+
 #include <stdio.h> 
 #include <stdlib.h> 
 #include <string.h> 
@@ -18,12 +31,19 @@
 void time_stamp(){
   
   time_t rawtime = time(NULL);
+  struct timeval tv;
+
+  gettimeofday(&tv, NULL);
+
+  //Removes the unnecessary micro seconds 
+  int msec = tv.tv_usec % 1000000;
     
   if (rawtime == -1) {
     printf("Get raw time failed\n");
     return;
   }
-    
+
+  //Gets the time and puts it into a struct  
   struct tm *time = localtime(&rawtime);
     
   if (time == NULL) {
@@ -31,38 +51,33 @@ void time_stamp(){
     return;
   }
   
-  printf("%02d:%02d:%02d ", time->tm_hour, time->tm_min, time->tm_sec);
+  //Prints the timestamp message for all prints
+  printf("[%02d:%02d:%02d.%03d]: ", time->tm_hour, time->tm_min, time->tm_sec, msec);
   
   return;
 }
 
-void reset_variables(int *timeout, int sockfd, struct timeval *tv){
-    *timeout = 0;
-    tv->tv_sec = TIMEOUT;
-    struct timeval temp = *tv;
-    if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &temp, sizeof(temp))< 0){
-    perror("Error");
-  }
-}
-
+//Resets the timeout checks for each state
 void reset_timeout(int *timeout, int sockfd, struct timeval *tv){
     *timeout = 0;
     tv->tv_sec = TIMEOUT;
     struct timeval temp = *tv;
     if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &temp, sizeof(temp))< 0){
-    perror("Error");
+    perror("Error\n");
   }
 }
 
+//Increments the timeout for each state
 void increment_timeout(int *timeout, int sockfd, struct timeval *tv){
   (*timeout)++;
   tv->tv_sec = tv->tv_sec * 2;
   struct timeval temp = *tv;
   if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &temp, sizeof(temp))< 0){
-    perror("Error");
+    perror("Error\n");
   }
 }
 
+//Function is used for sending flags only
 ssize_t send_without_data(int seq, int flag, int sockfd, struct sockaddr_in sockaddr){
   socklen_t len = sizeof(sockaddr);
   base_packet packet;
@@ -84,9 +99,11 @@ ssize_t send_without_data(int seq, int flag, int sockfd, struct sockaddr_in sock
 
 }
 
+//Checks the crc package
 int error_check(int read, crc_packet packet){
   if(read == 0){ // Socket has shut down, not sure if needed
-    printf(">>> Socket closed unexpectedly\n");
+    time_stamp();
+    printf("Socket closed unexpectedly\n");
     exit(1);
     // return false;
   }

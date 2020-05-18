@@ -1,3 +1,17 @@
+// ###########################################################
+// #         This program is written and designed by         #
+// #   Alexander Andersson, Casper Andersson, Nick Grannas   #
+// #           During the period 6/5/20 - 26/5/20            #
+// #          For course DVA 218 Datakommunikation           #
+// ###########################################################
+// #                      Description                        #
+// # File name: receiver_connection_setup                    #
+// # Function: Handles all the code for the connection setup #
+// # for the receiving side. Sends ACKs NACKs and other      #
+// # messages to the sender.                                 #
+// ###########################################################
+
+
 #include <stdio.h> 
 #include <sys/socket.h> 
 #include <arpa/inet.h> 
@@ -61,9 +75,6 @@ int connection_setup(int sockfd, struct sockaddr_in cliaddr){
       continue;
     }
 
-    time_stamp();
-    printf("Sender: %d\n", packet_received.flags);
-
     //Packet does not have the expected flag
     if(packet_received.flags != 2){
         response = -1;
@@ -77,7 +88,7 @@ int connection_setup(int sockfd, struct sockaddr_in cliaddr){
   }
   
   //Resets timeouts and loops and send a SYN ACK
-  reset_variables(&nr_of_timeouts, sockfd, &tv);
+  reset_timeout(&nr_of_timeouts, sockfd, &tv);
   response = -1;
   send_without_data(packet.seq, 3, sockfd, cliaddr);
 
@@ -108,9 +119,6 @@ int connection_setup(int sockfd, struct sockaddr_in cliaddr){
       continue;
     }
 
-    time_stamp();
-    printf("Sender: %d\n", packet_received.flags);
-
     //Packet does not have the expected flag
     if(packet_received.flags != 1){
         response = -1;
@@ -121,7 +129,7 @@ int connection_setup(int sockfd, struct sockaddr_in cliaddr){
   }
 
   //Resets and sets timeouts 
-  reset_variables(&nr_of_timeouts, sockfd, &tv);
+  reset_timeout(&nr_of_timeouts, sockfd, &tv);
   tv.tv_sec = 0;
   if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv))< 0)
   {

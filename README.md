@@ -44,9 +44,10 @@ So ACK + SYN = 3. SYN + FIN = 6. etc. It uses the same system as Linux file perm
 - [X] Global timeout for Receiver Sliding Window.
 - [X] Implement go-back-N.
 - [X] Auto-send testing system.
-- [ ] Test with only packet-lost enabled and only packet-corrupt enabled.
+- [X] Test with only packet-lost enabled and only packet-corrupt enabled.
 - [X] Put header files separately.
 - [X] Sender Window: send all data before sending quit and going to teardown.
 - [X] Use semaphore for packets_in_window in Sender Window.
+- [X] Include metadata in all .c files.
 - [X] Fix bug where windowFront goes too far in Sender Sliding.
 - [ ] Write lab report.

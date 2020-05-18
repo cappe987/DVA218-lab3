@@ -1,3 +1,17 @@
+// ###########################################################
+// #         This program is written and designed by         #
+// #   Alexander Andersson, Casper Andersson, Nick Grannas   #
+// #           During the period 6/5/20 - 26/5/20            #
+// #          For course DVA 218 Datakommunikation           #
+// ###########################################################
+// #                      Description                        #
+// # File name: sender_connection_setup                      #
+// # Function: Handles all the code for the connection setup #
+// # for the sending side. Sends ACKs NACKs and other        #
+// # messages to the receiver.                               #
+// ###########################################################
+
+
 #include <stdio.h> 
 #include <stdlib.h> 
 #include <sys/socket.h> 
@@ -30,7 +44,7 @@ int connection_setup(int sockfd, struct sockaddr_in servaddr){
     perror("Error\n");
   }
 
-  seq = rand() % 100;
+  seq = (rand() % 100) + 1;
 
   //Setting sequence number
   packet.seq = seq;
@@ -42,9 +56,6 @@ int connection_setup(int sockfd, struct sockaddr_in servaddr){
     response = recvfrom(sockfd, (char *)buffer, sizeof(crc_packet), MSG_WAITALL, (struct sockaddr *) &servaddr, &len); 
     full_packet = *(crc_packet*) buffer;
     packet_received = extract_base_packet(full_packet);
-
-    time_stamp();
-    printf("Receiver: %d\n", packet_received.flags);
 
     //No response
     if(response < 0){
@@ -77,7 +88,7 @@ int connection_setup(int sockfd, struct sockaddr_in servaddr){
   }
 
   //Resets timeouts and sends an ACK
-  reset_variables(&nr_of_timeouts, sockfd, &tv);
+  reset_timeout(&nr_of_timeouts, sockfd, &tv);
   time_stamp();
   printf("SYN + ACK received\nConnection Established\n"); 
   send_without_data(packet.seq, 1, sockfd, servaddr);

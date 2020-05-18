@@ -1,3 +1,17 @@
+// ###########################################################
+// #         This program is written and designed by         #
+// #   Alexander Andersson, Casper Andersson, Nick Grannas   #
+// #           During the period 6/5/20 - 26/5/20            #
+// #          For course DVA 218 Datakommunikation           #
+// ###########################################################
+// #                      Description                        #
+// # File name: receiver                                     #
+// # Function: Main program for the receiving side, starts   #
+// # the connection setup, sliding window and teardown       #
+// # functions.                                              #
+// ###########################################################
+
+
 #include <stdio.h> 
 #include <stdlib.h> 
 #include <unistd.h> 

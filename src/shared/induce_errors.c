@@ -1,3 +1,18 @@
+// ###########################################################
+// #         This program is written and designed by         #
+// #   Alexander Andersson, Casper Andersson, Nick Grannas   #
+// #           During the period 6/5/20 - 26/5/20            #
+// #          For course DVA 218 Datakommunikation           #
+// ###########################################################
+// #                      Description                        #
+// # File name: induce_errors                                #
+// # Function: All messages sent that has data go through    #
+// # here. If error simulation is enables it will choose     #
+// # randomly what type of error the packet will receive.    #
+// # The packets can receive no errors, become lost or       #
+// # become corrupt.                                         #
+// ###########################################################
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h> 

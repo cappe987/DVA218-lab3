@@ -1,3 +1,16 @@
+// ###########################################################
+// #         This program is written and designed by         #
+// #   Alexander Andersson, Casper Andersson, Nick Grannas   #
+// #           During the period 6/5/20 - 26/5/20            #
+// #          For course DVA 218 Datakommunikation           #
+// ###########################################################
+// #                      Description                        #
+// # File name: sender_teardown                              #
+// # Function: Handles all the code for the teardown of the  #
+// # sending side. Sends the neccessary messages to the      #
+// # receiving side to teardown the connection.              #
+// ###########################################################
+
 #include <stdio.h> 
 #include <unistd.h> 
 #include <sys/socket.h> 
@@ -13,7 +26,7 @@ int connection_teardown(int sockfd, struct sockaddr_in servaddr, int sequence){
     
     time_stamp();
     printf("Sender: connection teardown initialized.\n");
-    int response = -1, seq = sequence+1, nr_of_timeouts = 0;
+    int response = -1, seq = sequence +1, nr_of_timeouts = 0;
     char buffer[sizeof(crc_packet)]; 
     base_packet packet_received;
     socklen_t len;
@@ -52,7 +65,7 @@ int connection_teardown(int sockfd, struct sockaddr_in servaddr, int sequence){
             time_stamp();
             printf("Failed CRC check\n");
             send_without_data(seq + 1, 8, sockfd, servaddr);
-            response=-1;
+            response = -1;
             continue;
         }
 
@@ -60,13 +73,13 @@ int connection_teardown(int sockfd, struct sockaddr_in servaddr, int sequence){
             time_stamp();     
             printf("Received NACK, FIN resent.\n");
             send_without_data(seq, 4, sockfd, servaddr);
-            response=-1;        
+            response = -1;        
             continue;
         }
 
         if(packet_received.seq != seq +1) {
             time_stamp();
-            printf("Got seq number: %d. Expected seq number: %d", packet_received.seq, seq+1);
+            printf("Got seq number: %d. Expected seq number: %d\n", packet_received.seq, seq+1);
             response = -1;
             continue;
         }

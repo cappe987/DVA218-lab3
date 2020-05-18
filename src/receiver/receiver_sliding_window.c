@@ -1,3 +1,17 @@
+// ###########################################################
+// #         This program is written and designed by         #
+// #   Alexander Andersson, Casper Andersson, Nick Grannas   #
+// #           During the period 6/5/20 - 26/5/20            #
+// #          For course DVA 218 Datakommunikation           #
+// ###########################################################
+// #                      Description                        #
+// # File name: receiver_sliding_window                      #
+// # Function: Handles the sliding window for the receiver.  #
+// # It consumes the packets when it can, otherwise they are #
+// # stored in the window until the correct packets arrive.  # 
+// ###########################################################
+
+
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
