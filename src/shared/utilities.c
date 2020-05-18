@@ -59,7 +59,7 @@ void reset_variables(int *timeout, int sockfd, struct timeval *tv){
     tv->tv_sec = TIMEOUT;
     struct timeval temp = *tv;
     if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &temp, sizeof(temp))< 0){
-    perror("Error");
+    perror("Error\n");
   }
 }
 
@@ -68,7 +68,7 @@ void reset_timeout(int *timeout, int sockfd, struct timeval *tv){
     tv->tv_sec = TIMEOUT;
     struct timeval temp = *tv;
     if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &temp, sizeof(temp))< 0){
-    perror("Error");
+    perror("Error\n");
   }
 }
 
@@ -77,7 +77,7 @@ void increment_timeout(int *timeout, int sockfd, struct timeval *tv){
   tv->tv_sec = tv->tv_sec * 2;
   struct timeval temp = *tv;
   if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &temp, sizeof(temp))< 0){
-    perror("Error");
+    perror("Error\n");
   }
 }
 
