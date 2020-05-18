@@ -68,17 +68,17 @@ int selective_repeat(int front,
       // printf("No back exists yet\n");
 
       // No back exists, use SEQ.
-      int seqForIndex = SEQ;
-      int newfront = false;
+      int seq_for_index = SEQ;
+      int new_front = false;
 
       for(int i = 0; i < WINDOW_SIZE; i++){
-        if(i == front){newfront = true;}
-        if(seqForIndex == packet.seq){
+        if(i == front){new_front = true;}
+        if(seq_for_index == packet.seq){
           window[i] = packet;
           // printf(">>> No back - found spot in Window on index %d\n", i);
-          return newfront ? i : front;
+          return new_front ? i : front;
         }
-        seqForIndex++;
+        seq_for_index++;
       }
       // printf(">>> No back. Packet too far in the future\n");
       return -1;
@@ -86,17 +86,17 @@ int selective_repeat(int front,
     else{
       // printf("Back exists - try to find slot\n");
 
-      int seqForIndex = window[back].seq + 1;
-      int newfront = false;
+      int seq_for_index = window[back].seq + 1;
+      int new_front = false;
 
       for(int i = (back + 1) % WINDOW_SIZE; i != back; i = (i+1) % WINDOW_SIZE){
-        if(i == front){ newfront = true;}
-        if(seqForIndex == packet.seq){
+        if(i == front){ new_front = true;}
+        if(seq_for_index == packet.seq){
           window[i] = packet;
           // printf(">>> Found slot for packet on index %d\n", i);
-          return newfront ? i : front;
+          return new_front ? i : front;
         }
-        seqForIndex++;
+        seq_for_index++;
       }
     }
   }
@@ -131,9 +131,9 @@ int receiver_sliding_window(int sockfd, struct sockaddr_in cliaddr, int SEQ){
     printf("Using go-back-n\n");
   }
 
-  int expectedSEQ = SEQ + 1;
-  int windowBack  = 0;
-  int windowFront = -1;
+  int expected_seq = SEQ + 1;
+  int window_back  = 0;
+  int window_front = -1;
   int nr_of_timeouts = 0;
   struct timeval tv;
   tv.tv_sec = TIMEOUT;
@@ -200,16 +200,16 @@ int receiver_sliding_window(int sockfd, struct sockaddr_in cliaddr, int SEQ){
     printf("Received seq %d\n", packet.seq);
     // Do sequence number check
     if(USING_SELECTIVE_REPEAT){ // Selective repeat
-      res = selective_repeat(windowFront, windowBack, window, packet, SEQ);
+      res = selective_repeat(window_front, window_back, window, packet, SEQ);
 
       // ACK is sent no matter what the sequence check yields.
       // if(res >= 0){printf(">>> Seq %d placed in sliding window\n", packet.seq);}
-      int cumulative = find_cumulative(windowBack, windowFront, expectedSEQ, window);
+      int cumulative = find_cumulative(window_back, window_front, expected_seq, window);
       // printf(">>> Send ACK for seq %d, cumulative: %d ---- ", packet.seq, cumulative);
       send_without_data(cumulative, 1, sockfd, cliaddr);
     }
     else { // go-back-n
-      res = go_back_n(windowFront, windowBack, window, packet, SEQ);
+      res = go_back_n(window_front, window_back, window, packet, SEQ);
       if(res < 0 && waiting_for_resends == 0){ // Go back
         send_without_data(SEQ, 1, sockfd, cliaddr);
         waiting_for_resends = 1;
@@ -233,25 +233,25 @@ int receiver_sliding_window(int sockfd, struct sockaddr_in cliaddr, int SEQ){
     else{
       // printf(">>> Seq %d placed in sliding window\n", packet.seq);
       // // Send ACK
-      windowFront = res;
+      window_front = res;
 
       // Move Back forward if it's received.
       // Consume data that is ready
-      // while(window[windowBack].seq != -1 && window[windowBack+1].seq != -1){
-      while(window[windowBack].seq != -1){
+      // while(window[window_back].seq != -1 && window[window_back+1].seq != -1){
+      while(window[window_back].seq != -1){
         // printf(">>>> Moved back forward one step\n");
         time_stamp();
-        printf("Seq %d consumed. Data: %s\n", window[windowBack].seq, window[windowBack].data);
-        expectedSEQ = window[windowBack].seq + 1;
-        if(windowBack != windowFront){
-          // SEQ = window[windowBack].seq;
-          window[windowBack].seq = -1;
-          windowBack = (windowBack + 1) % WINDOW_SIZE;
+        printf("Seq %d consumed. Data: %s\n", window[window_back].seq, window[window_back].data);
+        expected_seq = window[window_back].seq + 1;
+        if(window_back != window_front){
+          // SEQ = window[window_back].seq;
+          window[window_back].seq = -1;
+          window_back = (window_back + 1) % WINDOW_SIZE;
         }
         else{
-          SEQ = window[windowBack].seq + 1;
-          windowBack = 0;
-          windowFront = -1;
+          SEQ = window[window_back].seq + 1;
+          window_back = 0;
+          window_front = -1;
           reset_window(window);
         }
       }

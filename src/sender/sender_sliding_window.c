@@ -23,8 +23,8 @@ int sock;
 struct sockaddr_in socket_addr;
 
 base_packet window[WINDOW_SIZE];
-int windowBack = 0;
-int windowFront = -1;
+int window_back = 0;
+int window_front = -1;
 int buffer_front = -1;
 int nr_of_timeouts = 0;
 int packets_in_window = 0;
@@ -86,8 +86,8 @@ void* input(void* params){
         packets_in_window++;
 
         //Checks the sliding window, if its full we dont send
-        if(back_front_diff(windowBack, windowFront) < WIN_MAX_SIZE - 1 || windowFront == -1){
-          windowFront = (windowFront + 1) % WINDOW_SIZE;
+        if(back_front_diff(window_back, window_front) < WIN_MAX_SIZE - 1 || window_front == -1){
+          window_front = (window_front + 1) % WINDOW_SIZE;
           crc_packet crcpacket;
           crcpacket = create_crc((char*)&packet);
           // crcpacket.crc = 50; // Induce error for testing
@@ -143,8 +143,8 @@ void* input(void* params){
       window[buffer_front] = packet;
       packets_in_window++;
 
-      if(back_front_diff(windowBack, windowFront) < WIN_MAX_SIZE - 1 || windowFront == -1){
-        windowFront = (windowFront + 1) % WINDOW_SIZE;
+      if(back_front_diff(window_back, window_front) < WIN_MAX_SIZE - 1 || window_front == -1){
+        window_front = (window_front + 1) % WINDOW_SIZE;
         crc_packet crcpacket;
         crcpacket = create_crc((char*)&packet);
         // crcpacket.crc = 50; // Induce error for testing
@@ -162,19 +162,19 @@ void* input(void* params){
 }
 
 void send_more(base_packet window[WINDOW_SIZE]){
-  if(back_front_diff(windowBack, windowFront) >= WIN_MAX_SIZE - 2 && windowFront != windowBack - 1){
+  if(back_front_diff(window_back, window_front) >= WIN_MAX_SIZE - 2 && window_front != window_back - 1){
     return;
   }
-  while(windowFront != buffer_front){
-    windowFront = (windowFront + 1) % WINDOW_SIZE;
+  while(window_front != buffer_front){
+    window_front = (window_front + 1) % WINDOW_SIZE;
     crc_packet crcpacket;
-    crcpacket = create_crc((char*)&window[windowFront]);
+    crcpacket = create_crc((char*)&window[window_front]);
     // crcpacket.crc = 50; // Induce error for testing
     // crcpacket.data[0] = 'X';
     time_stamp();
-    printf("Sending packet %d\n", window[windowFront].seq);
+    printf("Sending packet %d\n", window[window_front].seq);
     send_with_error(sock, (const char*)&crcpacket, sizeof(crc_packet), MSG_CONFIRM, (const struct sockaddr*) &socket_addr, sizeof(socket_addr));
-    if(back_front_diff(windowBack, windowFront) >= WIN_MAX_SIZE - 2){
+    if(back_front_diff(window_back, window_front) >= WIN_MAX_SIZE - 2){
       return;
     }
 
@@ -193,16 +193,16 @@ void handle_response(base_packet packet){
   // printf("FLAG: %d\n", flag);
   if(flag % 2 == 1){ // ACK
     pthread_mutex_lock(&winlock);
-    // for(int i = 0; i <= windowFront; i++){
+    // for(int i = 0; i <= window_front; i++){
     //   printf("WIN: %d\n", window[i].seq);
     // }
-    // int i = windowBack;
+    // int i = window_back;
     // while(window[i].seq != -1 && window[i].seq <= packet.seq){
-    while(window[windowBack].seq < packet.seq && windowBack != windowFront + 1){
-      // printf("Back: %d | Front: %d | packet.seq: %d\n", windowBack, windowFront, packet.seq);
+    while(window[window_back].seq < packet.seq && window_back != window_front + 1){
+      // printf("Back: %d | Front: %d | packet.seq: %d\n", window_back, window_front, packet.seq);
       // printf("WINSEQ: %d\n", window[i].seq);
       time_stamp();
-      printf("SEQ %d ACKED\n", window[windowBack].seq);
+      printf("SEQ %d ACKED\n", window[window_back].seq);
       current_SEQ++;
       if(current_SEQ == last_SEQ){
         time_stamp();
@@ -210,15 +210,15 @@ void handle_response(base_packet packet){
         pthread_mutex_unlock(&acklock);
         return;
       }
-      window[windowBack].seq = -1;
-      windowBack = (windowBack + 1) % WINDOW_SIZE;
+      window[window_back].seq = -1;
+      window_back = (window_back + 1) % WINDOW_SIZE;
       sem_post(&empty);
     }
 
-    // printf("Back: %d, Front: %d, BufferFront: %d\n", windowBack, windowFront, buffer_front);
-    if(windowBack == buffer_front + 1 && windowFront == buffer_front){ // Window is empty.
-      windowBack = 0;
-      windowFront = -1;
+    // printf("Back: %d, Front: %d, BufferFront: %d\n", window_back, window_front, buffer_front);
+    if(window_back == buffer_front + 1 && window_front == buffer_front){ // Window is empty.
+      window_back = 0;
+      window_front = -1;
       buffer_front = -1;
       reset_window(window);
     }
@@ -245,7 +245,7 @@ void handle_response(base_packet packet){
     printf("NACK received for seq %d\n", packet.seq);
     // Send again
     pthread_mutex_lock(&winlock);
-    for(int i = windowBack; i != (windowFront + 1) % WINDOW_SIZE; i = (i+1) % WINDOW_SIZE){
+    for(int i = window_back; i != (window_front + 1) % WINDOW_SIZE; i = (i+1) % WINDOW_SIZE){
       if(window[i].seq == packet.seq){
         time_stamp();
         printf("Resending seq %d due to NACK\n", window[i].seq);
@@ -263,8 +263,8 @@ void resend_all(base_packet window[WINDOW_SIZE]){
   pthread_mutex_lock(&winlock);
   crc_packet full_packet;
   // printf(">>> Resending ALL\n");
-  for(int i = windowBack; i != (windowFront + 1) % WINDOW_SIZE; i = (i + 1) % WINDOW_SIZE){
-    // printf("Back: %d | Front: %d\n", windowBack, windowFront);
+  for(int i = window_back; i != (window_front + 1) % WINDOW_SIZE; i = (i + 1) % WINDOW_SIZE){
+    // printf("Back: %d | Front: %d\n", window_back, window_front);
     if(window[i].seq != -1){
       time_stamp();
       printf("Resending seq %d due to timeout\n", window[i].seq);
