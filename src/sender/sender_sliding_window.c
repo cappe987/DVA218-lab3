@@ -109,6 +109,7 @@ void* input(void* params){
     //Waiting for the last ACK to open the lock
     pthread_mutex_lock(&acklock);
     pthread_mutex_unlock(&acklock);
+    time_stamp();
     printf("Last ACK received\n");
     return NULL;
     
@@ -167,6 +168,7 @@ void send_more(base_packet window[WINDOW_SIZE]){
     crcpacket = create_crc((char*)&window[windowFront]);
     // crcpacket.crc = 50; // Induce error for testing
     // crcpacket.data[0] = 'X';
+    time_stamp();
     printf("Sending packet %d\n", window[windowFront].seq);
     send_with_error(sock, (const char*)&crcpacket, sizeof(crc_packet), MSG_CONFIRM, (const struct sockaddr*) &socket_addr, sizeof(socket_addr));
     if( ! (back_front_diff(windowBack, windowFront) < WIN_MAX_SIZE - 1)){
@@ -195,9 +197,11 @@ void handle_response(base_packet packet){
     // while(window[i].seq != -1 && window[i].seq <= packet.seq){
     while(window[windowBack].seq < packet.seq && windowBack != windowFront + 1){
       // printf("WINSEQ: %d\n", window[i].seq);
-      printf(">>> SEQ %d ACKED\n", window[windowBack].seq);
+      time_stamp();
+      printf("SEQ %d ACKED\n", window[windowBack].seq);
       current_SEQ++;
       if(current_SEQ == last_SEQ){
+        time_stamp();
         printf("Finished looking for ACKs \n");
         pthread_mutex_unlock(&acklock);
         return;
@@ -218,7 +222,8 @@ void handle_response(base_packet packet){
       send_more(window);
     }
     pthread_mutex_unlock(&winlock);
-    printf(">>> Next expected is %d\n", packet.seq);
+    time_stamp();
+    printf("Next expected is %d\n", packet.seq);
 
     flag = flag - 1;
   }
@@ -232,12 +237,14 @@ void handle_response(base_packet packet){
     flag = flag - 4;
   }
   if(flag % 16 == 8){ // NACK
-    printf(">>> NACK received for seq %d\n", packet.seq);
+    time_stamp();
+    printf("NACK received for seq %d\n", packet.seq);
     // Send again
     pthread_mutex_lock(&winlock);
     for(int i = windowBack; i != (windowFront + 1) % WINDOW_SIZE; i = (i+1) % WINDOW_SIZE){
       if(window[i].seq == packet.seq){
-        printf(">>> Resending seq %d due to NACK\n", window[i].seq);
+        time_stamp();
+        printf("Resending seq %d due to NACK\n", window[i].seq);
         crc_packet full_packet = create_crc((char*)&window[i]);
         send_with_error(sock, (const char*)&full_packet, sizeof(crc_packet), 
             MSG_CONFIRM, (const struct sockaddr*) &socket_addr, sizeof(socket_addr));
@@ -254,7 +261,8 @@ void resend_all(base_packet window[WINDOW_SIZE]){
   // printf(">>> Resending ALL\n");
   for(int i = windowBack; i != (windowFront + 1) % WINDOW_SIZE; i = (i + 1) % WINDOW_SIZE){
     if(window[i].seq != -1){
-      printf(">>> Resending seq %d due to timeout\n", window[i].seq);
+      time_stamp();
+      printf("Resending seq %d due to timeout\n", window[i].seq);
       full_packet = create_crc((char*)&window[i]);
       send_with_error(sock, (const char*)&full_packet, sizeof(crc_packet), 
           MSG_CONFIRM, (const struct sockaddr*) &socket_addr, sizeof(socket_addr));
@@ -312,6 +320,8 @@ int sender_sliding_window(int sockfd, struct sockaddr_in sockaddr, int SEQ){
       reset_timeout(&nr_of_timeouts, sockfd, &tv);
       if( ! res){
         // CRC failed
+        time_stamp();
+        printf("Failed CRC check\n");
       }
       else{
         // reset_timeout(&nr_of_timeouts, sockfd, &tv);
@@ -327,6 +337,7 @@ int sender_sliding_window(int sockfd, struct sockaddr_in sockaddr, int SEQ){
         }
       }
     }
+    printf("\n");
   }
   return last_SEQ;
 }

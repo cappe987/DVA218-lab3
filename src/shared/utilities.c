@@ -69,6 +69,7 @@ ssize_t send_without_data(int seq, int flag, int sockfd, struct sockaddr_in sock
   packet.data[0] = '\0';
   packet.seq = seq;
   packet.flags = flag;
+  time_stamp();
   printf("Sent ");
   if(flag % 2  == 1){printf("ACK "); flag = flag - 1;}
   if(flag % 4  == 2){printf("SYN "); flag = flag - 2;}
@@ -85,7 +86,7 @@ ssize_t send_without_data(int seq, int flag, int sockfd, struct sockaddr_in sock
 
 int error_check(int read, crc_packet packet){
   if(read == 0){ // Socket has shut down, not sure if needed
-    printf(">>> Socket closed for some reason\n");
+    printf(">>> Socket closed unexpectedly\n");
     exit(1);
     // return false;
   }

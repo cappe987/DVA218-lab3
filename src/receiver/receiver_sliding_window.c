@@ -172,7 +172,8 @@ int receiver_sliding_window(int sockfd, struct sockaddr_in cliaddr, int SEQ){
     reset_timeout(&nr_of_timeouts, sockfd, &tv);
 
     if( ! error_check(read, full_packet)){
-      printf(">>> Failed CRC check\n");
+      time_stamp();
+      printf("Failed CRC check\n");
       // Send NACK
       send_without_data(packet.seq, 8, sockfd, cliaddr);
       printf("\n");
@@ -195,7 +196,8 @@ int receiver_sliding_window(int sockfd, struct sockaddr_in cliaddr, int SEQ){
 
     int res = -1;
 
-    printf(">>> Received seq %d\n", packet.seq);
+    time_stamp();
+    printf("Received seq %d\n", packet.seq);
     // Do sequence number check
     if(USING_SELECTIVE_REPEAT){ // Selective repeat
       res = selective_repeat(windowFront, windowBack, window, packet, SEQ);
@@ -238,7 +240,8 @@ int receiver_sliding_window(int sockfd, struct sockaddr_in cliaddr, int SEQ){
       // while(window[windowBack].seq != -1 && window[windowBack+1].seq != -1){
       while(window[windowBack].seq != -1){
         // printf(">>>> Moved back forward one step\n");
-        printf(">>> Seq %d consumed. Data: %s\n", window[windowBack].seq, window[windowBack].data);
+        time_stamp();
+        printf("Seq %d consumed. Data: %s\n", window[windowBack].seq, window[windowBack].data);
         expectedSEQ = window[windowBack].seq + 1;
         if(windowBack != windowFront){
           // SEQ = window[windowBack].seq;
