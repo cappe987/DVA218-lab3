@@ -1,3 +1,17 @@
+// ###########################################################
+// #         This program is written and designed by         #
+// #   Alexander Andersson, Casper Andersson, Nick Grannas   #
+// #           During the period 6/5/20 - 26/5/20            #
+// #          For course DVA 218 Datakommunikation           #
+// ###########################################################
+// #                      Description                        #
+// # File name: crc32                                        #
+// # Function: Handles the check for crc and convert packets #
+// # to crc packet and unconverts them. Also calculates the  #
+// # crc number.                                             #
+// ###########################################################
+
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -93,34 +107,3 @@ base_packet extract_base_packet(crc_packet packet){
   base_packet base = *((base_packet*)packet.data);
   return base;
 }
-
-// // DO NOT COMMIT WITH MAIN
-// int main() {
-//   // // Make string empty so CRC isn't calculated on garbage values.
-//   char string[CRC_DATA_SIZE];
-//   for(int i = 0; i < CRC_DATA_SIZE; i++){ 
-//     string[i] = 0;
-//   }
-//   // data.crc = 0;
-//   strcpy(string, "abc");
-//   crc_packet packet = create_crc(string);
-//   printf("Data: %s\n", packet.data);
-//   printf("CRC : %u\n", packet.crc);
-//   int crc = crc32(packet.data, CRC_DATA_SIZE);
-
-//   char* newdata = (char*)&packet;
-//   // char newdata[CRC_DATA_SIZE];
-//   // newdata = (char*)&packet;
-//   // create_msg_from_crc(&newdata, packet);
-//   printf("Str: %s\n", newdata);
-
-//   printf("\n");
-
-//   crc_packet newpack = *((crc_packet*)newdata);
-//   printf("Data: %s\n", newpack.data);
-//   printf("CRC : %u\n", newpack.crc);
-//   printf("Is valid CRC: %d\n", valid_crc(newpack));
-
-
-//   return 0;
-// }

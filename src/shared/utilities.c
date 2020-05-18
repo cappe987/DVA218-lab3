@@ -1,3 +1,16 @@
+// ###########################################################
+// #         This program is written and designed by         #
+// #   Alexander Andersson, Casper Andersson, Nick Grannas   #
+// #           During the period 6/5/20 - 26/5/20            #
+// #          For course DVA 218 Datakommunikation           #
+// ###########################################################
+// #                      Description                        #
+// # File name: Utilities                                    #
+// # Function: Here are the functions that are used globaly  #
+// # in the program.                                         #
+// ###########################################################
+
+
 #include <stdio.h> 
 #include <stdlib.h> 
 #include <string.h> 
@@ -18,6 +31,11 @@
 void time_stamp(){
   
   time_t rawtime = time(NULL);
+  struct timeval tv;
+
+  gettimeofday(&tv, NULL);
+
+  int msec = tv.tv_usec % 1000000;
     
   if (rawtime == -1) {
     printf("Get raw time failed\n");
@@ -31,7 +49,7 @@ void time_stamp(){
     return;
   }
   
-  printf("%02d:%02d:%02d ", time->tm_hour, time->tm_min, time->tm_sec);
+  printf("[%02d:%02d:%02d.%03d]: ", time->tm_hour, time->tm_min, time->tm_sec, msec);
   
   return;
 }

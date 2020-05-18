@@ -1,3 +1,16 @@
+// ###########################################################
+// #         This program is written and designed by         #
+// #   Alexander Andersson, Casper Andersson, Nick Grannas   #
+// #           During the period 6/5/20 - 26/5/20            #
+// #          For course DVA 218 Datakommunikation           #
+// ###########################################################
+// #                      Description                        #
+// # File name: receiver_teardown                            #
+// # Function: Handles all the code for the teardown of the  #
+// # receiving side. Sends the neccessary messages to        #
+// # the sending side to teardown the connection.            #
+// ###########################################################
+
 #include <sys/socket.h>
 #include <arpa/inet.h> 
 #include <sys/time.h> 

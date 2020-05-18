@@ -1,3 +1,17 @@
+// ###########################################################
+// #         This program is written and designed by         #
+// #   Alexander Andersson, Casper Andersson, Nick Grannas   #
+// #           During the period 6/5/20 - 26/5/20            #
+// #          For course DVA 218 Datakommunikation           #
+// ###########################################################
+// #                      Description                        #
+// # File name: receiver_connection_setup                    #
+// # Function: Handles all the code for the connection setup #
+// # for the receiving side. Sends ACKs NACKs and other      #
+// # messages to the sender.                                 #
+// ###########################################################
+
+
 #include <stdio.h> 
 #include <sys/socket.h> 
 #include <arpa/inet.h> 

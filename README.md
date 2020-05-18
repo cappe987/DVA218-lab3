@@ -48,3 +48,4 @@ So ACK + SYN = 3. SYN + FIN = 6. etc. It uses the same system as Linux file perm
 - [ ] Put header files separately.
 - [X] Sender Window: send all data before sending quit and going to teardown.
 - [X] Use semaphore for packets_in_window in Sender Window.
+- [X] Include metadata in all .c files.

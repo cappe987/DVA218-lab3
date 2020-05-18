@@ -1,3 +1,18 @@
+// ###########################################################
+// #         This program is written and designed by         #
+// #   Alexander Andersson, Casper Andersson, Nick Grannas   #
+// #           During the period 6/5/20 - 26/5/20            #
+// #          For course DVA 218 Datakommunikation           #
+// ###########################################################
+// #                      Description                        #
+// # File name: sender_sliding_window                        #
+// # Function: Handles the sliding window for the sender.    #
+// # It will fill the sliding window and if it is full it    #
+// # will fill its buffer instead until that is full.        #
+// # It will send the packets when it can.                   #
+// ###########################################################
+
+
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>

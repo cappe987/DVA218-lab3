@@ -1,3 +1,16 @@
+// ###########################################################
+// #         This program is written and designed by         #
+// #   Alexander Andersson, Casper Andersson, Nick Grannas   #
+// #           During the period 6/5/20 - 26/5/20            #
+// #          For course DVA 218 Datakommunikation           #
+// ###########################################################
+// #                      Description                        #
+// # File name: sender_teardown                              #
+// # Function: Handles all the code for the teardown of the  #
+// # sending side. Sends the neccessary messages to the      #
+// # receiving side to teardown the connection.              #
+// ###########################################################
+
 #include <stdio.h> 
 #include <unistd.h> 
 #include <sys/socket.h> 
@@ -66,7 +79,7 @@ int connection_teardown(int sockfd, struct sockaddr_in servaddr, int sequence){
 
         if(packet_received.seq != seq +1) {
             time_stamp();
-            printf("Got seq number: %d. Expected seq number: %d", packet_received.seq, seq+1);
+            printf("Got seq number: %d. Expected seq number: %d\n", packet_received.seq, seq+1);
             response = -1;
             continue;
         }
