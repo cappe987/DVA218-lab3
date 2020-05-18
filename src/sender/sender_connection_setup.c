@@ -26,7 +26,8 @@ int connection_setup(int sockfd, struct sockaddr_in servaddr){
   //Sets timeout
   if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv))< 0)
   {
-    perror("Error");
+    time_stamp();
+    perror("Error\n");
   }
 
   seq = rand() % 100;
@@ -42,11 +43,13 @@ int connection_setup(int sockfd, struct sockaddr_in servaddr){
     full_packet = *(crc_packet*) buffer;
     packet_received = extract_base_packet(full_packet);
 
+    time_stamp();
     printf("Receiver: %d\n", packet_received.flags);
 
     //No response
     if(response < 0){
       increment_timeout(&nr_of_timeouts, sockfd, &tv);
+      time_stamp();
       printf("Timeout\n");
         if(nr_of_timeouts == NR_OF_TIMEOUTS_ALLOWED){
             return -1;
@@ -57,6 +60,7 @@ int connection_setup(int sockfd, struct sockaddr_in servaddr){
 
     if( ! error_check(response, full_packet)){
       //Failed error check, sending NACK
+      time_stamp();
       printf("Error check 1\n");
       send_without_data(packet.seq, 8, sockfd, servaddr);
       response = -1;
@@ -66,6 +70,7 @@ int connection_setup(int sockfd, struct sockaddr_in servaddr){
     //Packet does not have the expected flag
     if(packet_received.flags != 3){
       response = -1;
+      time_stamp();
       printf("Received faulty message, sending SYN\n");
       send_without_data(packet.seq, 2, sockfd, servaddr);
     }
@@ -73,6 +78,7 @@ int connection_setup(int sockfd, struct sockaddr_in servaddr){
 
   //Resets timeouts and sends an ACK
   reset_variables(&nr_of_timeouts, sockfd, &tv);
+  time_stamp();
   printf("SYN + ACK received\nConnection Established\n"); 
   send_without_data(packet.seq, 1, sockfd, servaddr);
 
@@ -80,7 +86,7 @@ int connection_setup(int sockfd, struct sockaddr_in servaddr){
   tv.tv_sec = 0;
   if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv))< 0)
   {
-    perror("Error");
+    perror("Error\n");
   }
 
   return seq;
