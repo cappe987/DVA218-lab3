@@ -1,7 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h> 
+#include <sys/socket.h>
+#include <arpa/inet.h> 
 #include "induce_errors.h"
+#include "utilities.h"
 #include "crc32.h"
 
 ssize_t send_with_error(int sockfd, const void* buf, size_t size, int flags, const struct sockaddr* addr, socklen_t addr_len){

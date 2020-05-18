@@ -23,22 +23,6 @@ void connection_teardown(int sockfd, struct sockaddr_in cliaddr, int seqNr){
     struct timeval tv = { TIMEOUT, 0 };
     setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
 
-
-    //Testing snippet
-    //Just for testing lol
-    //---------------------------------
-    while(response < 0)
-    {
-        response = recvfrom(sockfd, (char *)buffer, sizeof(crc_packet), MSG_WAITALL, (struct sockaddr *) &cliaddr, &len);
-    }
-    time_stamp();
-    printf("FIN got\n");
-    response=-1;
-
-
-    //---------------------------------
-
-
     send_without_data(sequanceNumber, 5, sockfd, cliaddr);
 
     while(response < 0){
