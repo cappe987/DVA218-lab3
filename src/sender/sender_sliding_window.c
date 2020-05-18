@@ -235,9 +235,9 @@ void handle_response(base_packet packet){
     printf(">>> NACK received for seq %d\n", packet.seq);
     // Send again
     pthread_mutex_lock(&winlock);
-    for(int i = windowBack; i != windowFront + 1; i = (i+1) % WINDOW_SIZE){
+    for(int i = windowBack; i != (windowFront + 1) % WINDOW_SIZE; i = (i+1) % WINDOW_SIZE){
       if(window[i].seq == packet.seq){
-        printf(">>> Resending seq %d\n", window[i].seq);
+        printf(">>> Resending seq %d due to NACK\n", window[i].seq);
         crc_packet full_packet = create_crc((char*)&window[i]);
         send_with_error(sock, (const char*)&full_packet, sizeof(crc_packet), 
             MSG_CONFIRM, (const struct sockaddr*) &socket_addr, sizeof(socket_addr));
@@ -252,9 +252,9 @@ void resend_all(base_packet window[WINDOW_SIZE]){
   pthread_mutex_lock(&winlock);
   crc_packet full_packet;
   // printf(">>> Resending ALL\n");
-  for(int i = windowBack; i != windowFront + 1; i = (i + 1) % WINDOW_SIZE){
+  for(int i = windowBack; i != (windowFront + 1) % WINDOW_SIZE; i = (i + 1) % WINDOW_SIZE){
     if(window[i].seq != -1){
-      printf(">>> Resending seq %d\n", window[i].seq);
+      printf(">>> Resending seq %d due to timeout\n", window[i].seq);
       full_packet = create_crc((char*)&window[i]);
       send_with_error(sock, (const char*)&full_packet, sizeof(crc_packet), 
           MSG_CONFIRM, (const struct sockaddr*) &socket_addr, sizeof(socket_addr));
