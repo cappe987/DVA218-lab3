@@ -26,7 +26,7 @@ int connection_teardown(int sockfd, struct sockaddr_in servaddr, int sequence){
     
     time_stamp();
     printf("Sender: connection teardown initialized.\n");
-    int response = -1, seq = sequence+1, nr_of_timeouts = 0;
+    int response = -1, seq = sequence +1, nr_of_timeouts = 0;
     char buffer[sizeof(crc_packet)]; 
     base_packet packet_received;
     socklen_t len;
@@ -65,7 +65,7 @@ int connection_teardown(int sockfd, struct sockaddr_in servaddr, int sequence){
             time_stamp();
             printf("Failed CRC check\n");
             send_without_data(seq + 1, 8, sockfd, servaddr);
-            response=-1;
+            response = -1;
             continue;
         }
 
@@ -73,7 +73,7 @@ int connection_teardown(int sockfd, struct sockaddr_in servaddr, int sequence){
             time_stamp();     
             printf("Received NACK, FIN resent.\n");
             send_without_data(seq, 4, sockfd, servaddr);
-            response=-1;        
+            response = -1;        
             continue;
         }
 
