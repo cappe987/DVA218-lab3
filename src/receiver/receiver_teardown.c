@@ -79,7 +79,7 @@ void connection_teardown(int sockfd, struct sockaddr_in cliaddr, int seqNr){
         }
 
         if(received_packet.seq != sequanceNumber +1) {
-            if (received_packet.seq = sequanceNumber -1 && received_packet.flags == 4)
+            if (received_packet.seq == sequanceNumber -1 && received_packet.flags == 4)
             {
                 send_without_data(sequanceNumber, 5, sockfd, cliaddr);
                 printf("--------\n");

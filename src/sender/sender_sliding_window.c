@@ -96,7 +96,7 @@ void* input(void* params){
 
         }
         else{
-          printf("Didn't send %d\n", packet.seq);
+          // printf("Didn't send %d\n", packet.seq);
         }
         nr_of_packets++;
         letter++;
@@ -152,7 +152,7 @@ void* input(void* params){
 
       }
       else{
-        printf("Didn't send %d\n", packet.seq);
+        // printf("Didn't send %d\n", packet.seq);
       }
       pthread_mutex_unlock(&winlock);
     }
