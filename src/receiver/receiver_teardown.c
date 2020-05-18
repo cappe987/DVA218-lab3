@@ -4,10 +4,10 @@
 #include <stdio.h>
 #include <unistd.h> 
 
-#include "../shared/utilities.h"
-#include "../shared/base_packet.h"
-#include "../shared/constants.h"
-#include "../shared/crc32.h" 
+#include "../../include/shared/utilities.h"
+#include "../../include/shared/base_packet.h"
+#include "../../include/shared/constants.h"
+#include "../../include/shared/crc32.h" 
 
 
 void connection_teardown(int sockfd, struct sockaddr_in cliaddr, int seqNr){

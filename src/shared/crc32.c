@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include "crc32.h"
+#include "../../include/shared/crc32.h"
 
 unsigned int calculate_crc32(unsigned int crc, const unsigned char* data, size_t len) {
   static const unsigned int table[256] = {

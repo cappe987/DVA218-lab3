@@ -3,11 +3,11 @@
 #include <sys/socket.h> 
 #include <arpa/inet.h> 
 #include <sys/time.h> 
-#include "../shared/base_packet.h"
-#include "../shared/induce_errors.h"
-#include "../shared/constants.h"  
-#include "../shared/utilities.h"
-#include "sender_connection_setup.h"
+#include "../../include/shared/base_packet.h"
+#include "../../include/shared/induce_errors.h"
+#include "../../include/shared/constants.h"  
+#include "../../include/shared/utilities.h"
+// #include "../../include/sender/sender_connection_setup.h"
 
 int connection_teardown(int sockfd, struct sockaddr_in servaddr, int sequence){   
     

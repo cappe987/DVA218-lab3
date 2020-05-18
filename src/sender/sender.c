@@ -8,14 +8,14 @@
 #include <netinet/in.h> 
 #include <sys/time.h>
 #include <time.h>
-#include "../shared/base_packet.h"
-#include "../shared/crc32.h"
-#include "../shared/induce_errors.h"
-#include "../shared/constants.h"
-#include "../shared/utilities.h"
-#include "sender_connection_setup.h"
-#include "sender_teardown.h"
-#include "sender_sliding_window.h"
+#include "../../include/shared/base_packet.h"
+#include "../../include/shared/crc32.h"
+#include "../../include/shared/induce_errors.h"
+#include "../../include/shared/constants.h"
+#include "../../include/shared/utilities.h"
+#include "../../include/sender/sender_connection_setup.h"
+#include "../../include/sender/sender_teardown.h"
+#include "../../include/sender/sender_sliding_window.h"
 
 //ACK: 1 SYN: 2 FIN: 4 NACK: 8
 

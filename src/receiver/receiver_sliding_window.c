@@ -7,10 +7,10 @@
 // #include <sys/types.h> 
 // #include <arpa/inet.h> 
 #include <netinet/in.h> 
-#include "../shared/base_packet.h"
-#include "../shared/crc32.h"
-#include "../shared/utilities.h"
-#include "../shared/constants.h"
+#include "../../include/shared/base_packet.h"
+#include "../../include/shared/crc32.h"
+#include "../../include/shared/utilities.h"
+#include "../../include/shared/constants.h"
 
 #define USING_SELECTIVE_REPEAT 1
 
