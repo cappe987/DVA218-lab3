@@ -40,9 +40,9 @@ int main() {
     int seq = -1;
     
     // Creating socket file descriptor 
-    if ( (sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0){
+    if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0){
         time_stamp(); 
-        perror("socket creation failed\n"); 
+        printf("socket creation failed\n"); 
         return 1;
     } 
 
