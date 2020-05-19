@@ -38,7 +38,7 @@ void time_stamp(){
   //Removes the unnecessary micro seconds 
   int msec = tv.tv_usec % 1000000;
     
-  if (rawtime == -1) {
+  if (rawtime == -1){
     printf("Get raw time failed\n");
     return;
   }
@@ -46,7 +46,7 @@ void time_stamp(){
   //Gets the time and puts it into a struct  
   struct tm *time = localtime(&rawtime);
     
-  if (time == NULL) {
+  if (time == NULL){
     printf("Get local time failed\n");
     return;
   }
@@ -63,7 +63,7 @@ void reset_timeout(int *timeout, int sockfd, struct timeval *tv){
     tv->tv_sec = TIMEOUT;
     struct timeval temp = *tv;
     if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &temp, sizeof(temp))< 0){
-    perror("Error\n");
+      printf("Error setting the sock option\n");
   }
 }
 
@@ -73,7 +73,7 @@ void increment_timeout(int *timeout, int sockfd, struct timeval *tv){
   tv->tv_sec = tv->tv_sec * 2;
   struct timeval temp = *tv;
   if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &temp, sizeof(temp))< 0){
-    perror("Error\n");
+    printf("Error setting the sock option\n");
   }
 }
 

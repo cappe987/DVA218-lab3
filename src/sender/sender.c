@@ -36,46 +36,47 @@
 int main() { 
     srand(time(0));
     int sockfd; 
-    struct sockaddr_in servaddr; //, cliaddr; 
+    struct sockaddr_in servaddr; 
     int seq = -1;
-
     
     // Creating socket file descriptor 
-    if ( (sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ) {
+    if ( (sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0){
         time_stamp(); 
         perror("socket creation failed\n"); 
-        exit(EXIT_FAILURE); 
+        return 1;
     } 
 
     memset(&servaddr, 0, sizeof(servaddr));
-    
       
     // Filling server information 
     servaddr.sin_family = AF_INET; 
     servaddr.sin_port = htons(PORT); 
     servaddr.sin_addr.s_addr = INADDR_ANY; 
     
-
+    //Sender main loop
     while(seq == -1){
-      seq = connection_setup(sockfd, servaddr);
-      if(seq == -1){
-        time_stamp();
-        printf("Connection reset\n");
+
+        seq = connection_setup(sockfd, servaddr);
+
+        if(seq > -1){
+            //Connection setup was successfull
+            seq = sender_sliding_window(sockfd, servaddr, seq);
         }
-
-        seq = sender_sliding_window(sockfd, servaddr, seq);
-
-        if(seq == -1){
+        
+        else if(seq == -1){
+            //Connection failed during setup or in sliding window
             time_stamp();
-           printf("Connection to receiver lost, restarting setup\n");
+            printf("Connection to receiver lost, restarting setup\n");
         }
-        else{
+
+        //Everything has finished as expected and we start the teardown phase
+        if(seq > -1){
             time_stamp();
             printf("Connection teardown initiated\n"); 
             connection_teardown(sockfd, servaddr, seq);
             return 0;
         }
     } 
-    
+
     return 0; 
 } 

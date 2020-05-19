@@ -218,13 +218,13 @@ void handle_response(base_packet packet){
       // printf("WINSEQ: %d\n", window[i].seq);
       time_stamp();
       printf("SEQ %d ACKED\n", window[window_back].seq);
-      current_SEQ++;
       if(current_SEQ == last_SEQ){
         time_stamp();
         printf("Finished looking for ACKs \n");
         pthread_mutex_unlock(&acklock);
         return;
       }
+      current_SEQ++;
       window[window_back].seq = -1;
       window_back = (window_back + 1) % WINDOW_SIZE;
       sem_post(&empty);

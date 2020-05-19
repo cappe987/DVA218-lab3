@@ -38,12 +38,13 @@ int connection_setup(int sockfd, struct sockaddr_in servaddr){
   tv.tv_usec = 0;
 
   //Sets timeout
-  if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv))< 0)
-  {
+  if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv))< 0){
     time_stamp();
-    perror("Error\n");
+    printf("Error setting the sock option\n");
+    return -1;
   }
 
+  //Randomise the starting sequence number
   seq = (rand() % 100) + 1;
 
   //Setting sequence number
@@ -72,7 +73,7 @@ int connection_setup(int sockfd, struct sockaddr_in servaddr){
     if( ! error_check(response, full_packet)){
       //Failed error check, sending NACK
       time_stamp();
-      printf("Error check 1\n");
+      printf("Failed CRC check\n");
       send_without_data(packet.seq, 8, sockfd, servaddr);
       response = -1;
       continue;
@@ -95,9 +96,8 @@ int connection_setup(int sockfd, struct sockaddr_in servaddr){
 
   //Sets timeout
   tv.tv_sec = 0;
-  if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv))< 0)
-  {
-    perror("Error\n");
+  if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv))< 0){
+    printf("Error setting the sock option\n");
   }
 
   return seq;
