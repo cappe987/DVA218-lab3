@@ -44,6 +44,7 @@ int nr_of_timeouts = 0;
 int packets_in_window = 0;
 int last_SEQ = 0;
 int current_SEQ = 0;
+int previous_cumulative = -1;
 
 pthread_mutex_t winlock;
 pthread_mutex_t acklock;
@@ -193,6 +194,22 @@ void send_more(base_packet window[WINDOW_SIZE]){
 }
 
 
+// Sender reached timeout. Resend all packets that haven't been ACKed.
+void resend_all(base_packet window[WINDOW_SIZE], char* reason){
+  crc_packet full_packet;
+  for(int i = window_back; i != (window_front + 1) % WINDOW_SIZE; i = (i + 1) % WINDOW_SIZE){
+    if(window[i].seq != -1){
+      time_stamp();
+      printf("Resending seq %d due to %s\n", window[i].seq, reason);
+      full_packet = create_crc((char*)&window[i]);
+      send_with_error(sock, (const char*)&full_packet, sizeof(crc_packet), 
+          MSG_CONFIRM, (const struct sockaddr*) &socket_addr, sizeof(socket_addr));
+    }
+  }
+}
+
+
+
 // Clears the window
 void reset_window(base_packet window[WINDOW_SIZE]){
   for(int i = 0; i < WINDOW_SIZE; i++){
@@ -204,6 +221,28 @@ void handle_response(base_packet packet){
   int flag = packet.flags;
   if(flag % 2 == 1){ // ACK
     pthread_mutex_lock(&winlock);
+
+    if(USING_SELECTIVE_REPEAT){
+      if(packet.seq == previous_cumulative){ // Resend due to cumulative
+        for(int i = window_back; i != (window_front + 1) % WINDOW_SIZE; i = (i+1) % WINDOW_SIZE){
+          if(window[i].seq == packet.seq){
+            time_stamp();
+            printf("Resending seq %d due to cumulative ACK\n", window[i].seq);
+            crc_packet full_packet = create_crc((char*)&window[i]);
+            send_with_error(sock, (const char*)&full_packet, sizeof(crc_packet), 
+                MSG_CONFIRM, (const struct sockaddr*) &socket_addr, sizeof(socket_addr));
+          }
+        }
+      }
+    }
+    else{
+      if(packet.seq == previous_cumulative){
+        resend_all(window, "go-back-N cumulative ACK");
+      }
+    }
+
+    previous_cumulative = packet.seq;
+
     while(window[window_back].seq < packet.seq && window_back != window_front + 1){
       time_stamp();
       printf("SEQ %d ACKED\n", window[window_back].seq);
@@ -263,23 +302,6 @@ void handle_response(base_packet packet){
 }
 
 
-// Sender reached timeout. Resend all packets that haven't been ACKed.
-void resend_all(base_packet window[WINDOW_SIZE]){
-  pthread_mutex_lock(&winlock);
-  crc_packet full_packet;
-  for(int i = window_back; i != (window_front + 1) % WINDOW_SIZE; i = (i + 1) % WINDOW_SIZE){
-    if(window[i].seq != -1){
-      time_stamp();
-      printf("Resending seq %d due to timeout\n", window[i].seq);
-      full_packet = create_crc((char*)&window[i]);
-      send_with_error(sock, (const char*)&full_packet, sizeof(crc_packet), 
-          MSG_CONFIRM, (const struct sockaddr*) &socket_addr, sizeof(socket_addr));
-    }
-  }
-  pthread_mutex_unlock(&winlock);
-}
-
-
 int sender_sliding_window(int sockfd, struct sockaddr_in sockaddr, int SEQ){
   printf(">>> Sliding window started\n");
   sock = sockfd;
@@ -320,7 +342,9 @@ int sender_sliding_window(int sockfd, struct sockaddr_in sockaddr, int SEQ){
         pthread_cancel(input_thread);
         return -1;
       }
-      resend_all(window);
+      pthread_mutex_lock(&winlock);
+      resend_all(window, "timeout");
+      pthread_mutex_unlock(&winlock);
     }
     else{
       // Packet received.

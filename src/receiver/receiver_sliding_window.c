@@ -25,7 +25,6 @@
 #include "../../include/shared/utilities.h"
 #include "../../include/shared/constants.h"
 
-#define USING_SELECTIVE_REPEAT 1
 
 // go-back-N
 
