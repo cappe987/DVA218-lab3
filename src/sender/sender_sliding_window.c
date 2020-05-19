@@ -29,7 +29,6 @@
 #include "../../include/shared/induce_errors.h"
 #include <semaphore.h>
 
-// #define WINDOW_SIZE 4
 
 //Must be below WINDOW_SIZE
 #define WIN_MAX_SIZE 16
@@ -59,11 +58,10 @@ int back_front_diff(int back, int front){
   }
 }
 
+// Function for inputting data, mainly automated.
 void* input(void* params){
   int seq = *(int*)params;
-  // printf("SENDER WINDOW SEQ: %d\n", seq);
   char message[DATA_SIZE];
-  // int i = 4;
 
   if(APPLICATION_SIMULATOR){
     int packets_to_send;
@@ -87,7 +85,6 @@ void* input(void* params){
 
         base_packet packet;
         packet.seq = seq;
-        // printf("Last SEQ: %d Current SEQ: %d\n", last_SEQ, current_SEQ);
         seq++;
         
         memcpy(packet.data, message, DATA_SIZE);
@@ -162,8 +159,6 @@ void* input(void* params){
         window_front = (window_front + 1) % WINDOW_SIZE;
         crc_packet crcpacket;
         crcpacket = create_crc((char*)&packet);
-        // crcpacket.crc = 50; // Induce error for testing
-        // crcpacket.data[0] = 'X';
         send_with_error(sock, (const char*)&crcpacket, sizeof(crc_packet), MSG_CONFIRM, (const struct sockaddr*) &socket_addr, sizeof(socket_addr));
 
       }
@@ -176,6 +171,7 @@ void* input(void* params){
   return NULL;
 }
 
+// ACK's have been received. Send more packets if there exists any in buffer.
 void send_more(base_packet window[WINDOW_SIZE]){
   if(back_front_diff(window_back, window_front) >= WIN_MAX_SIZE - 2 && window_front != window_back - 1){
     return;
@@ -197,6 +193,7 @@ void send_more(base_packet window[WINDOW_SIZE]){
 }
 
 
+// Clears the window
 void reset_window(base_packet window[WINDOW_SIZE]){
   for(int i = 0; i < WINDOW_SIZE; i++){
     window[i].seq = -1;
@@ -205,17 +202,9 @@ void reset_window(base_packet window[WINDOW_SIZE]){
 
 void handle_response(base_packet packet){
   int flag = packet.flags;
-  // printf("FLAG: %d\n", flag);
   if(flag % 2 == 1){ // ACK
     pthread_mutex_lock(&winlock);
-    // for(int i = 0; i <= window_front; i++){
-    //   printf("WIN: %d\n", window[i].seq);
-    // }
-    // int i = window_back;
-    // while(window[i].seq != -1 && window[i].seq <= packet.seq){
     while(window[window_back].seq < packet.seq && window_back != window_front + 1){
-      // printf("Back: %d | Front: %d | packet.seq: %d\n", window_back, window_front, packet.seq);
-      // printf("WINSEQ: %d\n", window[i].seq);
       time_stamp();
       printf("SEQ %d ACKED\n", window[window_back].seq);
       if(current_SEQ == last_SEQ){
@@ -230,7 +219,6 @@ void handle_response(base_packet packet){
       sem_post(&empty);
     }
 
-    // printf("Back: %d, Front: %d, BufferFront: %d\n", window_back, window_front, buffer_front);
     if(window_back == buffer_front + 1 && window_front == buffer_front){ // Window is empty.
       window_back = 0;
       window_front = -1;
@@ -252,6 +240,7 @@ void handle_response(base_packet packet){
   }
   if(flag % 8 == 4){ // FIN 
     // End connection
+    // Receiver isn't expected to end the connection.
   
     flag = flag - 4;
   }
@@ -274,12 +263,11 @@ void handle_response(base_packet packet){
 }
 
 
+// Sender reached timeout. Resend all packets that haven't been ACKed.
 void resend_all(base_packet window[WINDOW_SIZE]){
   pthread_mutex_lock(&winlock);
   crc_packet full_packet;
-  // printf(">>> Resending ALL\n");
   for(int i = window_back; i != (window_front + 1) % WINDOW_SIZE; i = (i + 1) % WINDOW_SIZE){
-    // printf("Back: %d | Front: %d\n", window_back, window_front);
     if(window[i].seq != -1){
       time_stamp();
       printf("Resending seq %d due to timeout\n", window[i].seq);
@@ -324,17 +312,18 @@ int sender_sliding_window(int sockfd, struct sockaddr_in sockaddr, int SEQ){
               MSG_WAITALL, (struct sockaddr*) &sockaddr, 
               &len);
 
-    // printf("READ: %d\n", read);
     if(read < 0){
       // Timeout
       increment_timeout(&nr_of_timeouts, sockfd, &tv);
       if(nr_of_timeouts == NR_OF_TIMEOUTS_ALLOWED){
+        // Other side assumed to be lost. Exit connection.
         pthread_cancel(input_thread);
         return -1;
       }
       resend_all(window);
     }
     else{
+      // Packet received.
       crc_packet full_packet = *(crc_packet*)buffer;
       int res = error_check(read, full_packet);
       reset_timeout(&nr_of_timeouts, sockfd, &tv);
@@ -344,12 +333,10 @@ int sender_sliding_window(int sockfd, struct sockaddr_in sockaddr, int SEQ){
         printf("Failed CRC check\n");
       }
       else{
-        // reset_timeout(&nr_of_timeouts, sockfd, &tv);
         // CRC passed
-        // int result = handle_response(extract_base_packet(full_packet));
-        // handle_response(extract_base_packet(full_packet));
         base_packet packet = extract_base_packet(full_packet);
         if(packet.seq == setup_SEQ && packet.flags == 3){
+          // In case Receiver Setup hasn't received its last ACK.
           send_without_data(packet.seq, 1, sockfd, sockaddr);
         }
         else{
