@@ -80,7 +80,7 @@ int main() {
         if(sender_seq > -1){
             time_stamp();
             printf("Connection teardown initiated\n"); 
-            connection_teardown(sockfd, servaddr, sender_seq);
+            connection_teardown(sockfd, cliaddr, sender_seq);
             return 0;
         }
     }
