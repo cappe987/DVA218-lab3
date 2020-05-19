@@ -1,17 +1,3 @@
-// ###########################################################
-// #         This program is written and designed by         #
-// #   Alexander Andersson, Casper Andersson, Nick Grannas   #
-// #           During the period 6/5/20 - 26/5/20            #
-// #          For course DVA 218 Datakommunikation           #
-// ###########################################################
-// #                      Description                        #
-// # File name: receiver_sliding_window                      #
-// # Function: Handles the sliding window for the receiver.  #
-// # It consumes the packets when it can, otherwise they are #
-// # stored in the window until the correct packets arrive.  # 
-// ###########################################################
-
-
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
@@ -38,6 +24,7 @@ int go_back_n(int front,
               base_packet packet,
               int SEQ){
 
+  // It only needs to check if it's the expected value. 
   if(packet.seq == SEQ){
     window[back] = packet;
     return front + 1;
@@ -55,31 +42,25 @@ int selective_repeat(int front,
                    int SEQ){
 
   if(front == -1 && packet.seq == SEQ){
-    // printf(">>> First packet is SEQ\n");
     window[0] = packet;
     return 0;
   }
   else if(packet.seq < SEQ || packet.seq <= window[back].seq){
-    // Send ACK.
     return front;
   }
   else if(front == -1){ // packet.seq > SEQ and first packet.
     int index = packet.seq - SEQ;
     if (index < WINDOW_SIZE){
-      // printf(">>> First package fit in window on index %d\n", index);
       window[index] = packet;
       return index;
     }
     else{
       // Package too far into the future.
-      // printf(">>> Packet too far in the future\n");
       return -1;
     }
   }
   else{ // packet.seq >= SEQ. Find where it should go.
-    // printf("packet.seq >= SEQ\n");
     if(window[back].seq == -1){
-      // printf("No back exists yet\n");
 
       // No back exists, use SEQ.
       int seq_for_index = SEQ;
@@ -89,16 +70,13 @@ int selective_repeat(int front,
         if(i == front){new_front = true;}
         if(seq_for_index == packet.seq){
           window[i] = packet;
-          // printf(">>> No back - found spot in Window on index %d\n", i);
           return new_front ? i : front;
         }
         seq_for_index++;
       }
-      // printf(">>> No back. Packet too far in the future\n");
       return -1;
     }
     else{
-      // printf("Back exists - try to find slot\n");
 
       int seq_for_index = window[back].seq + 1;
       int new_front = false;
@@ -107,7 +85,6 @@ int selective_repeat(int front,
         if(i == front){ new_front = true;}
         if(seq_for_index == packet.seq){
           window[i] = packet;
-          // printf(">>> Found slot for packet on index %d\n", i);
           return new_front ? i : front;
         }
         seq_for_index++;
@@ -115,17 +92,17 @@ int selective_repeat(int front,
     }
   }
 
-  // printf(">>> No slot found\n");
-
   return -1;
 }
 
+// Clears the window.
 void reset_window(base_packet window[WINDOW_SIZE]){
   for(int i = 0; i < WINDOW_SIZE; i++){
     window[i].seq = -1;
   }
 }
 
+// Finds the next expected seq.
 int find_cumulative(int back, int front, int SEQ, base_packet window[WINDOW_SIZE]){
   int expects = SEQ;
   int i = back;
@@ -158,13 +135,13 @@ int receiver_sliding_window(int sockfd, struct sockaddr_in cliaddr, int SEQ){
   base_packet window[WINDOW_SIZE];
   for(int i = 0; i < WINDOW_SIZE; i++){
     window[i].seq = -1;
-    // printf("%d\n", window[i].seq);
   }
 
   char buffer[sizeof(crc_packet)]; 
   int read;
   socklen_t len = sizeof(cliaddr);
 
+  // Connection loop
   while(true){
 
     read = recvfrom(sockfd, (char *)buffer, sizeof(crc_packet),  
@@ -174,7 +151,7 @@ int receiver_sliding_window(int sockfd, struct sockaddr_in cliaddr, int SEQ){
     crc_packet full_packet = *(crc_packet*) buffer;
     base_packet packet = extract_base_packet(full_packet);
     
-    //No response
+    //No response, timeout.
     if(read < 0){
       increment_timeout(&nr_of_timeouts, sockfd, &tv);
         if(nr_of_timeouts == NR_OF_TIMEOUTS_ALLOWED){
@@ -183,8 +160,10 @@ int receiver_sliding_window(int sockfd, struct sockaddr_in cliaddr, int SEQ){
         continue;
     }
 
+    // Packet successfully received.
     reset_timeout(&nr_of_timeouts, sockfd, &tv);
 
+    // CRC check
     if( ! error_check(read, full_packet)){
       time_stamp();
       printf("Failed CRC check\n");
@@ -194,19 +173,17 @@ int receiver_sliding_window(int sockfd, struct sockaddr_in cliaddr, int SEQ){
       continue; // Restart loop
     }
 
-    // printf(">>> Passed CRC check\n");
-
     // Packet passed error check
 
     if(packet.flags == 4){
       // Fin
-      // Should it finish waiting for all packets and then exit?
       return packet.seq;
     }
-    // if(packet.flags > 0){
-    //   // What? Flags should only be able to be 4.
-    //   continue;
-    // }
+    if(packet.flags > 0){
+      // What? Flags should only be able to be 4.
+      // Ignore packet.
+      continue;
+    }
 
     int res = -1;
 
@@ -217,43 +194,39 @@ int receiver_sliding_window(int sockfd, struct sockaddr_in cliaddr, int SEQ){
       res = selective_repeat(window_front, window_back, window, packet, SEQ);
 
       // ACK is sent no matter what the sequence check yields.
-      // if(res >= 0){printf(">>> Seq %d placed in sliding window\n", packet.seq);}
       int cumulative = find_cumulative(window_back, window_front, expected_seq, window);
-      // printf(">>> Send ACK for seq %d, cumulative: %d ---- ", packet.seq, cumulative);
       send_without_data(cumulative, 1, sockfd, cliaddr);
     }
     else { // go-back-n
       res = go_back_n(window_front, window_back, window, packet, SEQ);
       if(res < 0 && waiting_for_resends == 0){ // Go back
+        // Send ACK to go back.
         send_without_data(SEQ, 1, sockfd, cliaddr);
         waiting_for_resends = 1;
       }
       else if(res >= 0 && waiting_for_resends == 1){ // Resends found
-        // printf(">>> Seq %d placed in sliding window\n", packet.seq);
+        // Send ACK for next seq.
         send_without_data(SEQ + 1, 1, sockfd, cliaddr);
         waiting_for_resends = 0;
       }
       else if(res >= 0){ // Message received, just send ACK.
-        // printf(">>> Seq %d placed in sliding window\n", packet.seq);
+        // Send ACK for next seq.
         send_without_data(SEQ + 1, 1, sockfd, cliaddr);
 
       }
     }
 
     if(res < 0){
-      // // Send ACK?
-      // printf(">>> Sequence check failed %d\n", packet.seq);
+      // Sliding window returned < 0.
+      // Already handled previously.
     }
     else{
-      // printf(">>> Seq %d placed in sliding window\n", packet.seq);
-      // // Send ACK
       window_front = res;
 
-      // Move Back forward if it's received.
-      // Consume data that is ready
-      // while(window[window_back].seq != -1 && window[window_back+1].seq != -1){
+      // Move window_back forward if it's received.
+      // Consume data that is ready.
+      // 
       while(window[window_back].seq != -1){
-        // printf(">>>> Moved back forward one step\n");
         time_stamp();
         printf("Seq %d consumed. Data: %s\n", window[window_back].seq, window[window_back].data);
         expected_seq = window[window_back].seq + 1;
@@ -263,6 +236,8 @@ int receiver_sliding_window(int sockfd, struct sockaddr_in cliaddr, int SEQ){
           window_back = (window_back + 1) % WINDOW_SIZE;
         }
         else{
+          // Window completely empty. Reset variables.
+          // Probably not necessary, but it makes things easier.
           SEQ = window[window_back].seq + 1;
           window_back = 0;
           window_front = -1;
