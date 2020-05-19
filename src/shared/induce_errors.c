@@ -27,7 +27,7 @@ ssize_t send_with_error(int sockfd, const void* buf, size_t size, int flags, con
   if(ERRORS_ENABLED){ // ERRORS_ENABLED can be found in induce_errors.h
     // Do printf whenever an error occurs.
 
-    int error = rand() % 10;
+    int error = rand() % 14;
 
     switch (error)
     {

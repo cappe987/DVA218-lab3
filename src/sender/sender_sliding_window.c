@@ -73,7 +73,7 @@ void* input(void* params){
     while(loops != NUMBER_OF_LOOPS){
       
       nr_of_packets = 0;
-      packets_to_send = rand() % PACKETS_TO_SEND;
+      packets_to_send = (rand() % PACKETS_TO_SEND) + 3;
       last_SEQ = last_SEQ + packets_to_send;
       letter = '0';
       printf("Number of packets to send: %d\n", packets_to_send);

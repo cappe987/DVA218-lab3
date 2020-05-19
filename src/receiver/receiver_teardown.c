@@ -56,7 +56,7 @@ void connection_teardown(int sockfd, struct sockaddr_in cliaddr, int seqNr){
             //Resend FIN+ACK
             send_without_data(sequence_number, 5, sockfd, cliaddr); 
             time_stamp();       
-            printf("FIN + ACK resent %d times.\n", timeouts); 
+            printf("FIN + ACK resent\n"); 
             continue;
         }
 
@@ -89,7 +89,7 @@ void connection_teardown(int sockfd, struct sockaddr_in cliaddr, int seqNr){
             }
             else{
                 time_stamp();
-                printf("Got seq number: %d. Expected seq number: %d\n", received_packet.seq, sequence_number+1);
+                printf("Packet is not the expected one\n");
                 response = -1;
                 continue;
             }
@@ -97,7 +97,7 @@ void connection_teardown(int sockfd, struct sockaddr_in cliaddr, int seqNr){
         }
     
         time_stamp();
-        printf("ACK got (SEQ %d)\n",received_packet.seq);
+        printf("ACK received\n");
         time_stamp();
         printf("Receiver: connection teardown complete.\n");
     

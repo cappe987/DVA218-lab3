@@ -53,7 +53,7 @@ int connection_teardown(int sockfd, struct sockaddr_in servaddr, int sequence){
             //Resend FIN
             send_without_data(seq, 4, sockfd, servaddr);
             time_stamp();        
-            printf("FIN resent %d times.\n", nr_of_timeouts);  
+            printf("FIN resent\n");  
             continue;
         }
         crc_packet full_packet = *(crc_packet*) buffer;
@@ -79,7 +79,7 @@ int connection_teardown(int sockfd, struct sockaddr_in servaddr, int sequence){
 
         if(packet_received.seq != seq +1) {
             time_stamp();
-            printf("Got seq number: %d. Expected seq number: %d\n", packet_received.seq, seq+1);
+            printf("Packet is not the expected one");
             response = -1;
             continue;
         }
@@ -87,7 +87,7 @@ int connection_teardown(int sockfd, struct sockaddr_in servaddr, int sequence){
     }
 
     time_stamp();
-    printf("FIN + ACK got (SEQ %d)\n",packet_received.seq);
+    printf("FIN + ACK received\n");
     seq+=2;  
     send_without_data(seq, 1, sockfd, servaddr); 
   
