@@ -39,10 +39,10 @@ int main() {
     int sender_seq = -1;
       
     // Creating socket file descriptor 
-    if ( (sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ) {
+    if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0){
         time_stamp(); 
-        perror("socket creation failed\n"); 
-        exit(EXIT_FAILURE); 
+        printf("socket creation failed\n"); 
+        return 1;
     } 
       
     memset(&servaddr, 0, sizeof(servaddr)); 
@@ -54,24 +54,30 @@ int main() {
     servaddr.sin_port = htons(PORT); 
       
     // Bind the socket with the server address 
-    if ( bind(sockfd, (const struct sockaddr *)&servaddr,  
-            sizeof(servaddr)) < 0 ) 
-    { 
+    if (bind(sockfd, (const struct sockaddr *)&servaddr, sizeof(servaddr)) < 0){ 
         time_stamp();
-        perror("bind failed\n"); 
-        exit(EXIT_FAILURE); 
+        printf("Bind failed\n"); 
+        return 1;
     }
 
+    //Receiver main loop
     while(sender_seq == -1){
+
         sender_seq = connection_setup(sockfd,cliaddr);
 
-        sender_seq = receiver_sliding_window(sockfd, cliaddr, sender_seq);
-
-        if(sender_seq == -1){
+        if(sender_seq > -1){
+            //Connection setup was successfull
+            sender_seq = receiver_sliding_window(sockfd, cliaddr, sender_seq);
+        }
+        
+        else if(sender_seq == -1){
+            //Connection failed during setup or in sliding window
             time_stamp();
             printf("Connection to receiver lost, restarting setup\n");
         }
-        else{
+
+        //Everything has finished as expected and we start the teardown phase
+        if(sender_seq > -1){
             time_stamp();
             printf("Connection teardown initiated\n"); 
             connection_teardown(sockfd, servaddr, sender_seq);

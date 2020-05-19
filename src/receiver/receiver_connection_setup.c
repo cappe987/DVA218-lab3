@@ -35,12 +35,13 @@ int connection_setup(int sockfd, struct sockaddr_in cliaddr){
   tv.tv_usec = 0;
 
   //Sets timeout
-  if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv))< 0)
-  {
+  if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv))< 0){
     time_stamp();
-    perror("Error\n");
+    printf("Error setting the sock option\n");
+    return -1;
   }
 
+  //Initialize variables for the first packet
   len = sizeof(cliaddr);
   packet.seq = 1;
   packet.flags = 3;
@@ -55,7 +56,7 @@ int connection_setup(int sockfd, struct sockaddr_in cliaddr){
     //No response
     if(response < 0){
       time_stamp();
-      printf("Response < 0 \n");
+      printf("No response from sender \n");
       increment_timeout(&nr_of_timeouts, sockfd, &tv);
       time_stamp();
       printf("Timeout\n");
@@ -65,21 +66,20 @@ int connection_setup(int sockfd, struct sockaddr_in cliaddr){
         continue;
     }
 
-    
     if( ! error_check(response, full_packet)){
       //Failed error check, sending NACK
       time_stamp();
-      printf("Error check 1\n");
+      printf("Failed CRC check \n");
       send_without_data(packet.seq, 8, sockfd, cliaddr);
       response = -1;
       continue;
     }
 
-    //Packet does not have the expected flag
+    //if the packet does not have the expected flag it will be a corrupted or NACK packet
     if(packet_received.flags != 2){
         response = -1;
         time_stamp();
-        printf("Received faulty SYN / NACK\n");
+        printf("Received faulty SYN or NACK\n");
         send_without_data(packet.seq, 8, sockfd, cliaddr);   
     }
     //Stores the sequence number for sliding window
@@ -87,7 +87,7 @@ int connection_setup(int sockfd, struct sockaddr_in cliaddr){
     packet.seq = packet_received.seq;
   }
   
-  //Resets timeouts and loops and send a SYN ACK
+  //Resets the timeouts and loops then sends a SYN + ACK
   reset_timeout(&nr_of_timeouts, sockfd, &tv);
   response = -1;
   send_without_data(packet.seq, 3, sockfd, cliaddr);
@@ -99,31 +99,35 @@ int connection_setup(int sockfd, struct sockaddr_in cliaddr){
     packet_received = extract_base_packet(full_packet);
 
       //No response
-     if(response < 0){
+    if(response < 0){
+      time_stamp();
+      printf("No response from the sender\n");
       increment_timeout(&nr_of_timeouts, sockfd, &tv);
       time_stamp();
-        printf("Timeout\n");
-        if(nr_of_timeouts == NR_OF_TIMEOUTS_ALLOWED){
-            return -1;
-        }
-        send_without_data(packet.seq, 3, sockfd, cliaddr);
-        continue;
+      printf("Timeout\n");
+      if(nr_of_timeouts == NR_OF_TIMEOUTS_ALLOWED){
+        return -1;
+      }
+      //Resend the SYN + ACK
+      send_without_data(packet.seq, 3, sockfd, cliaddr);
+      continue;
     }
 
     if( ! error_check(response, full_packet)){
       //Failed error check, sending NACK
       time_stamp();
-      printf("Error check 2\n");
+      printf("Failed CRC check\n");
       send_without_data(packet.seq, 8, sockfd, cliaddr);
       response = -1;
       continue;
     }
 
-    //Packet does not have the expected flag
+    //If the packet does not have the expected flag it will be and NACK
     if(packet_received.flags != 1){
         response = -1;
         time_stamp();
         printf("Received NACK\n");
+        //Resend SYN + ACK
         send_without_data(packet.seq, 3, sockfd, cliaddr);
     } 
   }
@@ -131,10 +135,9 @@ int connection_setup(int sockfd, struct sockaddr_in cliaddr){
   //Resets and sets timeouts 
   reset_timeout(&nr_of_timeouts, sockfd, &tv);
   tv.tv_sec = 0;
-  if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv))< 0)
-  {
+  if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv))< 0){
     time_stamp();
-    perror("Error\n");
+    printf("Error setting the sock option\n");
   }
 
   time_stamp();
