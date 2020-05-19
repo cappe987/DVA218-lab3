@@ -126,7 +126,7 @@ int connection_setup(int sockfd, struct sockaddr_in cliaddr){
     if(packet_received.flags != 1){
         response = -1;
         time_stamp();
-        printf("Received NACK\n");
+        printf("Did not receive ACK\n");
         //Resend SYN + ACK
         send_without_data(packet.seq, 3, sockfd, cliaddr);
     } 

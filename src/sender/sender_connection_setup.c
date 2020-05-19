@@ -91,7 +91,7 @@ int connection_setup(int sockfd, struct sockaddr_in servaddr){
   //Resets timeouts and sends an ACK
   reset_timeout(&nr_of_timeouts, sockfd, &tv);
   time_stamp();
-  printf("SYN + ACK received\nConnection Established\n"); 
+  printf("SYN + ACK received\n"); 
   send_without_data(packet.seq, 1, sockfd, servaddr);
 
   //Sets timeout
@@ -100,5 +100,7 @@ int connection_setup(int sockfd, struct sockaddr_in servaddr){
     printf("Error setting the sock option\n");
   }
 
+  printf("Connection established\n");
+  
   return seq;
 }
