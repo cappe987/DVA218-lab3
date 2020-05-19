@@ -79,7 +79,7 @@ int connection_teardown(int sockfd, struct sockaddr_in servaddr, int sequence){
 
         if(packet_received.seq != seq +1) {
             time_stamp();
-            printf("Packet is not the expected one");
+            printf("Packet is not the expected one\n");
             response = -1;
             continue;
         }
@@ -99,7 +99,7 @@ int connection_teardown(int sockfd, struct sockaddr_in servaddr, int sequence){
         if (response > 0)
         {
             time_stamp();
-            printf("Received NACK, resent ACK");
+            printf("Received NACK, resent ACK\n");
             send_without_data(seq, 1, sockfd, servaddr);
         }
     

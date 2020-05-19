@@ -86,6 +86,8 @@ void connection_teardown(int sockfd, struct sockaddr_in cliaddr, int seqNr){
                 time_stamp();
                 printf("Received FIN, resending FIN ACK\n");
                 send_without_data(sequence_number, 5, sockfd, cliaddr);
+                response = -1;
+                continue;
             }
             else{
                 time_stamp();
