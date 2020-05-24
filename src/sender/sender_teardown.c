@@ -62,7 +62,8 @@ int connection_teardown(int sockfd, struct sockaddr_in *servaddr, int sequence){
         }
         crc_packet full_packet = *(crc_packet*) buffer;
         packet_received = extract_base_packet(full_packet);
-        
+
+
         if(!error_check(response, full_packet)){
             // Send NACK
             sleep(1);
@@ -73,21 +74,25 @@ int connection_teardown(int sockfd, struct sockaddr_in *servaddr, int sequence){
             continue;
         }
 
-        if(packet_received.flags == 8){ 
+         if(packet_received.flags == 8 && packet_received.seq == seq){ 
             time_stamp();     
             printf("Received NACK, FIN resent.\n");
             send_without_data(seq, 4, sockfd, servaddr);
+            printf("\n");
             response = -1;        
             continue;
         }
 
-        if(packet_received.seq != seq +1) {
+        if(packet_received.flags == 5) {
             time_stamp();
-            printf("Packet is not the expected one\n");
+            printf("FIN + ACK got (SEQ %d)\n\n",packet_received.seq);
+        }
+        else{
+            //time_stamp();
+            //printf("(SEQ %d), (FLAG %d)\n\n", packet_received.seq, packet_received.flags);
             response = -1;
             continue;
         }
-
     }
 
     time_stamp();
@@ -96,14 +101,14 @@ int connection_teardown(int sockfd, struct sockaddr_in *servaddr, int sequence){
     send_without_data(seq, 1, sockfd, servaddr); 
   
   
-    struct timeval tv2 = { 5, 0 };
+    struct timeval tv2 = { 10, 0 };
     setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &tv2, sizeof(struct timeval));
     while(response > -1){
         response = recvfrom(sockfd, (char *)buffer, DATA_SIZE, MSG_WAITALL, (struct sockaddr *) servaddr, &len); 
         if (response > 0)
         {
             time_stamp();
-            printf("Received NACK, resent ACK\n");
+            printf("Received NACK or FIN + ACK. Resent ACK\n");
             send_without_data(seq, 1, sockfd, servaddr);
         }
     
