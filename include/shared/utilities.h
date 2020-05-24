@@ -11,7 +11,7 @@ void reset_timeout(int *timeout, int sockfd, struct timeval *tv);
 
 void increment_timeout(int *timeout, int sockfd, struct timeval *tv);
 
-ssize_t send_without_data(int seq, int flag, int sockfd, struct sockaddr_in sockaddr);
+ssize_t send_without_data(int seq, int flag, int sockfd, struct sockaddr_in *sockaddr);
 
 int error_check(int read, crc_packet packet);
 

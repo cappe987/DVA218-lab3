@@ -16,13 +16,15 @@
 #include <sys/socket.h> 
 #include <arpa/inet.h> 
 #include <sys/time.h> 
+#include <string.h>
+#include <errno.h>
 #include "../../include/shared/base_packet.h"
 #include "../../include/shared/induce_errors.h"
 #include "../../include/shared/settings.h"  
 #include "../../include/shared/utilities.h"
 // #include "../../include/sender/sender_connection_setup.h"
 
-int connection_teardown(int sockfd, struct sockaddr_in servaddr, int sequence){   
+int connection_teardown(int sockfd, struct sockaddr_in *servaddr, int sequence){   
     
     time_stamp();
     printf("Sender: connection teardown initialized.\n");
@@ -33,12 +35,14 @@ int connection_teardown(int sockfd, struct sockaddr_in servaddr, int sequence){
 
     //Reset socket timeout timer
     struct timeval tv = { TIMEOUT, 0 };
-    setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+    // setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+    reset_timeout(&nr_of_timeouts, sockfd, &tv);
 
     send_without_data(seq, 4, sockfd, servaddr);  
+    // printf("ERROR: %s\n", strerror(errno));
 
     while(response < 0){
-        response = recvfrom(sockfd, (char *)buffer, sizeof(crc_packet), MSG_WAITALL, (struct sockaddr *) &servaddr, &len); 
+        response = recvfrom(sockfd, (char *)buffer, sizeof(crc_packet), MSG_WAITALL, (struct sockaddr *) servaddr, &len); 
         if (response < 0)
         {
             increment_timeout(&nr_of_timeouts, sockfd, &tv);
@@ -95,7 +99,7 @@ int connection_teardown(int sockfd, struct sockaddr_in servaddr, int sequence){
     struct timeval tv2 = { 5, 0 };
     setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &tv2, sizeof(struct timeval));
     while(response > -1){
-        response = recvfrom(sockfd, (char *)buffer, DATA_SIZE, MSG_WAITALL, (struct sockaddr *) &servaddr, &len); 
+        response = recvfrom(sockfd, (char *)buffer, DATA_SIZE, MSG_WAITALL, (struct sockaddr *) servaddr, &len); 
         if (response > 0)
         {
             time_stamp();

@@ -25,7 +25,7 @@
 #include "../../include/sender/sender_connection_setup.h"
 #include "../../include/shared/crc32.h"
 
-int connection_setup(int sockfd, struct sockaddr_in servaddr){
+int connection_setup(int sockfd, struct sockaddr_in *servaddr){
   int response = -1, seq = -1, nr_of_timeouts = 0;
   char buffer[sizeof(crc_packet)]; 
   base_packet packet;
@@ -54,7 +54,7 @@ int connection_setup(int sockfd, struct sockaddr_in servaddr){
 
   //SYN Sent state loop
   while(response < 0){
-    response = recvfrom(sockfd, (char *)buffer, sizeof(crc_packet), MSG_WAITALL, (struct sockaddr *) &servaddr, &len); 
+    response = recvfrom(sockfd, (char *)buffer, sizeof(crc_packet), MSG_WAITALL, (struct sockaddr *) servaddr, &len); 
     full_packet = *(crc_packet*) buffer;
     packet_received = extract_base_packet(full_packet);
 

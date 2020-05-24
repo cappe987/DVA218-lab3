@@ -78,8 +78,8 @@ void increment_timeout(int *timeout, int sockfd, struct timeval *tv){
 }
 
 //Function is used for sending flags only
-ssize_t send_without_data(int seq, int flag, int sockfd, struct sockaddr_in sockaddr){
-  socklen_t len = sizeof(sockaddr);
+ssize_t send_without_data(int seq, int flag, int sockfd, struct sockaddr_in *sockaddr){
+  socklen_t len = sizeof(*sockaddr);
   base_packet packet;
   packet.data[0] = '\0';
   packet.seq = seq;
@@ -95,7 +95,7 @@ ssize_t send_without_data(int seq, int flag, int sockfd, struct sockaddr_in sock
 
   crc_packet full_packet = create_crc((char*)&packet);
   return send_with_error(sockfd, (const char *)&full_packet, sizeof(crc_packet),  
-      MSG_CONFIRM, (const struct sockaddr *)&sockaddr, len); 
+      MSG_CONFIRM, (const struct sockaddr *)sockaddr, len); 
 
 }
 

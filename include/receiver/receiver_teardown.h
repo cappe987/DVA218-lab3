@@ -3,6 +3,6 @@
 #include <sys/socket.h> 
 
 
-void connection_teardown(int sockfd, struct sockaddr_in cliaddr, int seqNr);
+void connection_teardown(int sockfd, struct sockaddr_in *cliaddr, int seqNr);
 
 #endif

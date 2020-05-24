@@ -16,6 +16,8 @@
 #include <sys/time.h> 
 #include <stdio.h>
 #include <unistd.h> 
+#include <string.h>
+#include <errno.h>
 
 #include "../../include/shared/utilities.h"
 #include "../../include/shared/base_packet.h"
@@ -23,24 +25,26 @@
 #include "../../include/shared/crc32.h" 
 
 
-void connection_teardown(int sockfd, struct sockaddr_in cliaddr, int seqNr){
+void connection_teardown(int sockfd, struct sockaddr_in *cliaddr, int seqNr){
     
     time_stamp();
     printf("Receiver: connection teardown initialized.\n");
     int response = -1, sequence_number = seqNr+1,timeouts = 0;
     base_packet received_packet;
     char buffer[sizeof(crc_packet)];  
-    socklen_t len = sizeof(cliaddr);
+    socklen_t len = sizeof(*cliaddr);
 
     //Reset socket timeout timer
     struct timeval tv = { TIMEOUT, 0 };
-    setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+    reset_timeout(&timeouts, sockfd, &tv);
+    // setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
 
     send_without_data(sequence_number, 5, sockfd, cliaddr);
+    // printf("ERROR: %s\n", strerror(errno));
 
     while(response < 0){
         sleep(1);
-        response = recvfrom(sockfd, (char *)buffer, sizeof(crc_packet), MSG_WAITALL, (struct sockaddr *) &cliaddr, &len);
+        response = recvfrom(sockfd, (char *)buffer, sizeof(crc_packet), MSG_WAITALL, (struct sockaddr *) cliaddr, &len);
         //Check for timeout
         if (response < 0)
         { 

@@ -32,7 +32,7 @@
 
 
 int sock;
-struct sockaddr_in socket_addr;
+struct sockaddr_in *socket_addr;
 
 base_packet window[WINDOW_SIZE];
 int window_back = 0;
@@ -103,7 +103,7 @@ void* input(void* params){
           crcpacket = create_crc((char*)&packet);
           // crcpacket.crc = 50; // Induce error for testing
           // crcpacket.data[0] = 'X';
-          send_with_error(sock, (const char*)&crcpacket, sizeof(crc_packet), MSG_CONFIRM, (const struct sockaddr*) &socket_addr, sizeof(socket_addr));
+          send_with_error(sock, (const char*)&crcpacket, sizeof(crc_packet), MSG_CONFIRM, (const struct sockaddr*) socket_addr, sizeof(*socket_addr));
 
         }
         else{
@@ -158,7 +158,7 @@ void* input(void* params){
         window_front = (window_front + 1) % WINDOW_SIZE;
         crc_packet crcpacket;
         crcpacket = create_crc((char*)&packet);
-        send_with_error(sock, (const char*)&crcpacket, sizeof(crc_packet), MSG_CONFIRM, (const struct sockaddr*) &socket_addr, sizeof(socket_addr));
+        send_with_error(sock, (const char*)&crcpacket, sizeof(crc_packet), MSG_CONFIRM, (const struct sockaddr*) socket_addr, sizeof(*socket_addr));
 
       }
       else{
@@ -183,7 +183,7 @@ void send_more(base_packet window[WINDOW_SIZE]){
     // crcpacket.data[0] = 'X';
     time_stamp();
     printf("Sending packet %d\n", window[window_front].seq);
-    send_with_error(sock, (const char*)&crcpacket, sizeof(crc_packet), MSG_CONFIRM, (const struct sockaddr*) &socket_addr, sizeof(socket_addr));
+    send_with_error(sock, (const char*)&crcpacket, sizeof(crc_packet), MSG_CONFIRM, (const struct sockaddr*) socket_addr, sizeof(*socket_addr));
     if(back_front_diff(window_back, window_front) >= WIN_MAX_SIZE - 2){
       return;
     }
@@ -201,7 +201,7 @@ void resend_all(base_packet window[WINDOW_SIZE], char* reason){
       printf("Resending seq %d due to %s\n", window[i].seq, reason);
       full_packet = create_crc((char*)&window[i]);
       send_with_error(sock, (const char*)&full_packet, sizeof(crc_packet), 
-          MSG_CONFIRM, (const struct sockaddr*) &socket_addr, sizeof(socket_addr));
+          MSG_CONFIRM, (const struct sockaddr*) socket_addr, sizeof(*socket_addr));
     }
   }
 }
@@ -228,7 +228,7 @@ void handle_response(base_packet packet){
             printf("Resending seq %d due to cumulative ACK\n", window[i].seq);
             crc_packet full_packet = create_crc((char*)&window[i]);
             send_with_error(sock, (const char*)&full_packet, sizeof(crc_packet), 
-                MSG_CONFIRM, (const struct sockaddr*) &socket_addr, sizeof(socket_addr));
+                MSG_CONFIRM, (const struct sockaddr*) socket_addr, sizeof(*socket_addr));
           }
         }
       }
@@ -292,7 +292,7 @@ void handle_response(base_packet packet){
         printf("Resending seq %d due to NACK\n", window[i].seq);
         crc_packet full_packet = create_crc((char*)&window[i]);
         send_with_error(sock, (const char*)&full_packet, sizeof(crc_packet), 
-            MSG_CONFIRM, (const struct sockaddr*) &socket_addr, sizeof(socket_addr));
+            MSG_CONFIRM, (const struct sockaddr*) socket_addr, sizeof(*socket_addr));
       }
     }
     pthread_mutex_unlock(&winlock);
@@ -300,7 +300,7 @@ void handle_response(base_packet packet){
 }
 
 
-int sender_sliding_window(int sockfd, struct sockaddr_in sockaddr, int SEQ){
+int sender_sliding_window(int sockfd, struct sockaddr_in *sockaddr, int SEQ){
   printf(">>> Sliding window started\n");
   sock = sockfd;
   socket_addr = sockaddr;
@@ -329,7 +329,7 @@ int sender_sliding_window(int sockfd, struct sockaddr_in sockaddr, int SEQ){
   int read = 0;
   while(last_SEQ != current_SEQ){
     read = recvfrom(sockfd, buffer, sizeof(crc_packet), 
-              MSG_WAITALL, (struct sockaddr*) &sockaddr, 
+              MSG_WAITALL, (struct sockaddr*) sockaddr, 
               &len);
 
     if(read < 0){

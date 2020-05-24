@@ -125,7 +125,7 @@ int find_cumulative(int back, int front, int SEQ, base_packet window[WINDOW_SIZE
   return expects;
 }
 
-int receiver_sliding_window(int sockfd, struct sockaddr_in cliaddr, int SEQ){ 
+int receiver_sliding_window(int sockfd, struct sockaddr_in *cliaddr, int SEQ){ 
   printf(">>> Sliding window started\n");
   if(USING_SELECTIVE_REPEAT){
     printf("Using selective repeat\n");
@@ -151,13 +151,13 @@ int receiver_sliding_window(int sockfd, struct sockaddr_in cliaddr, int SEQ){
 
   char buffer[sizeof(crc_packet)]; 
   int read;
-  socklen_t len = sizeof(cliaddr);
+  socklen_t len = sizeof(*cliaddr);
 
   // Connection loop
   while(true){
 
     read = recvfrom(sockfd, (char *)buffer, sizeof(crc_packet),  
-                MSG_WAITALL, ( struct sockaddr *) &cliaddr, 
+                MSG_WAITALL, ( struct sockaddr *) cliaddr, 
                 &len); 
 
     crc_packet full_packet = *(crc_packet*) buffer;

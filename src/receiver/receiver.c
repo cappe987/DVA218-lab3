@@ -63,11 +63,11 @@ int main() {
     //Receiver main loop
     while(sender_seq == -1){
 
-        sender_seq = connection_setup(sockfd,cliaddr);
+        sender_seq = connection_setup(sockfd, &cliaddr);
 
         if(sender_seq > -1){
             //Connection setup was successfull
-            sender_seq = receiver_sliding_window(sockfd, cliaddr, sender_seq);
+            sender_seq = receiver_sliding_window(sockfd, &cliaddr, sender_seq);
         }
         
         else if(sender_seq == -1){
@@ -80,7 +80,7 @@ int main() {
         if(sender_seq > -1){
             time_stamp();
             printf("Connection teardown initiated\n"); 
-            connection_teardown(sockfd, cliaddr, sender_seq);
+            connection_teardown(sockfd, &cliaddr, sender_seq);
             return 0;
         }
     }

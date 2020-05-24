@@ -32,7 +32,7 @@
 #define WIN_MAX_SIZE 16
 
 // Toggle the error generator.
-#define ERRORS_ENABLED 1
+#define ERRORS_ENABLED 0
 
 
 #endif

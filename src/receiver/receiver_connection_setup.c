@@ -23,7 +23,7 @@
 #include "../../include/receiver/receiver_connection_setup.h"
 #include "../../include/shared/crc32.h"
 
-int connection_setup(int sockfd, struct sockaddr_in cliaddr){
+int connection_setup(int sockfd, struct sockaddr_in *cliaddr){
   char buffer[sizeof(crc_packet)]; 
   base_packet packet;
   base_packet packet_received;
@@ -42,14 +42,14 @@ int connection_setup(int sockfd, struct sockaddr_in cliaddr){
   }
 
   //Initialize variables for the first packet
-  len = sizeof(cliaddr);
+  len = sizeof(*cliaddr);
   packet.seq = 1;
   packet.flags = 3;
   int response = -1, nr_of_timeouts = 0, sender_seq = -1;
   
   //Listen state loop
   while(response < 0){
-    response = recvfrom(sockfd, (char *)buffer, sizeof(crc_packet), MSG_WAITALL, (struct sockaddr *) &cliaddr, &len); 
+    response = recvfrom(sockfd, (char *)buffer, sizeof(crc_packet), MSG_WAITALL, (struct sockaddr *) cliaddr, &len); 
     full_packet = *(crc_packet*) buffer;
     packet_received = extract_base_packet(full_packet);
 
@@ -94,7 +94,7 @@ int connection_setup(int sockfd, struct sockaddr_in cliaddr){
 
   //SYN-Received state loop
   while(response < 0){
-    response = recvfrom(sockfd, (char *)buffer, sizeof(crc_packet), MSG_WAITALL, (struct sockaddr *) &cliaddr, &len); 
+    response = recvfrom(sockfd, (char *)buffer, sizeof(crc_packet), MSG_WAITALL, (struct sockaddr *) cliaddr, &len); 
     full_packet = *(crc_packet*) buffer;
     packet_received = extract_base_packet(full_packet);
 

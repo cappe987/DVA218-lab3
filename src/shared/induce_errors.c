@@ -18,6 +18,8 @@
 #include <time.h> 
 #include <sys/socket.h>
 #include <arpa/inet.h> 
+#include <string.h>
+#include <errno.h>
 #include "../../include/shared/induce_errors.h"
 #include "../../include/shared/utilities.h"
 #include "../../include/shared/crc32.h"
@@ -29,6 +31,7 @@ ssize_t send_with_error(int sockfd, const void* buf, size_t size, int flags, con
     // Do printf whenever an error occurs.
 
     int error = rand() % 14;
+    int res = 0;
 
     switch (error)
     {
@@ -45,11 +48,19 @@ ssize_t send_with_error(int sockfd, const void* buf, size_t size, int flags, con
       char* corrupt_packet = (char*)buf;
       corrupt_packet[10] = 't';
       
-      return sendto(sockfd, corrupt_packet, size, flags, addr, addr_len);
+      res = sendto(sockfd, corrupt_packet, size, flags, addr, addr_len);
+      if (res < 0){
+        printf("ERROR: %s\n", strerror(errno));
+      }
+      return res;
       break;
     default:
       //No packet errors
-      return sendto(sockfd, buf, size, flags, addr, addr_len);
+      res = sendto(sockfd, buf, size, flags, addr, addr_len);
+      if (res < 0){
+        printf("ERROR: %s\n", strerror(errno));
+      }
+      return res;
       break;
     }
 
