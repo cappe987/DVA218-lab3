@@ -30,8 +30,6 @@
 #include <semaphore.h>
 
 
-//Must be below WINDOW_SIZE
-#define WIN_MAX_SIZE 16
 
 int sock;
 struct sockaddr_in socket_addr;
