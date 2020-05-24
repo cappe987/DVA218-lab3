@@ -24,7 +24,7 @@
 #include <time.h>
 #include "../../include/shared/base_packet.h"
 #include "../../include/shared/induce_errors.h"
-#include "../../include/shared/constants.h"  
+#include "../../include/shared/settings.h"  
 #include "../../include/receiver/receiver_sliding_window.h"
 #include "../../include/receiver/receiver_connection_setup.h"
 #include "../../include/receiver/receiver_teardown.h"

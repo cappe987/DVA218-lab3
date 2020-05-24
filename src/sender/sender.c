@@ -24,7 +24,7 @@
 #include "../../include/shared/base_packet.h"
 #include "../../include/shared/crc32.h"
 #include "../../include/shared/induce_errors.h"
-#include "../../include/shared/constants.h"
+#include "../../include/shared/settings.h"
 #include "../../include/shared/utilities.h"
 #include "../../include/sender/sender_connection_setup.h"
 #include "../../include/sender/sender_teardown.h"
